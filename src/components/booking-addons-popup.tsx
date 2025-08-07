@@ -11,7 +11,6 @@ import {
   DrawerTitle,
 } from "@/components/ui/drawer"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import { IconX, IconCheck } from "@tabler/icons-react"
 import { Booking } from "@/types/booking"
 

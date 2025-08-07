@@ -35,22 +35,6 @@ export function CampsiteGrid({ spots, onUpdate }: CampsiteGridProps) {
     setIsDialogOpen(true)
   }
 
-  const handleAdd = () => {
-    setEditingSpot(null)
-    setFormData({
-      name: '',
-      type: 'tent',
-      capacity: 2,
-      pricePerNight: 100,
-      amenities: [],
-      description: '',
-      isAvailable: true,
-      location: { zone: '', spotNumber: '' },
-      utilities: { electricity: false, water: false, sewage: false, wifi: false }
-    })
-    setIsDialogOpen(true)
-  }
-
   const handleSave = async () => {
     try {
       const spotToSave = editingSpot
@@ -139,9 +123,9 @@ export function CampsiteGrid({ spots, onUpdate }: CampsiteGridProps) {
                   <CardDescription>
                     <div className="flex items-center gap-2 text-sm text-gray-600">
                       <MapPin className="w-3 h-3" />
-                      {spot.location?.zone && spot.location?.spotNumber 
+                      {spot.location?.zone && spot.location?.spotNumber
                         ? `Strefa ${spot.location.zone}, miejsce ${spot.location.spotNumber}`
-                        : spot.location || 'Lokalizacja nieokreślona'}
+                        : 'Lokalizacja nieokreślona'}
                     </div>
                   </CardDescription>
                 </div>
@@ -231,7 +215,7 @@ export function CampsiteGrid({ spots, onUpdate }: CampsiteGridProps) {
                 <Label>Typ</Label>
                 <Select
                   value={formData.type || 'tent'}
-                  onValueChange={(value) => setFormData({ ...formData, type: value as any })}
+                  onValueChange={(value) => setFormData({ ...formData, type: value as CampsiteSpot['type'] })}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -269,9 +253,12 @@ export function CampsiteGrid({ spots, onUpdate }: CampsiteGridProps) {
                 <Label>Strefa</Label>
                 <Input
                   value={formData.location?.zone || ''}
-                  onChange={(e) => setFormData({ 
-                    ...formData, 
-                    location: { ...formData.location, zone: e.target.value } 
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    location: {
+                      zone: e.target.value,
+                      spotNumber: formData.location?.spotNumber ?? ''
+                    }
                   })}
                   placeholder="np. A"
                 />
@@ -295,9 +282,14 @@ export function CampsiteGrid({ spots, onUpdate }: CampsiteGridProps) {
                 </Label>
                 <Switch
                   checked={formData.utilities?.electricity || false}
-                  onCheckedChange={(checked) => setFormData({ 
-                    ...formData, 
-                    utilities: { ...formData.utilities, electricity: checked } 
+                  onCheckedChange={(checked) => setFormData({
+                    ...formData,
+                    utilities: {
+                      electricity: Boolean(checked),
+                      water: formData.utilities?.water ?? false,
+                      sewage: formData.utilities?.sewage ?? false,
+                      wifi: formData.utilities?.wifi ?? false
+                    }
                   })}
                 />
               </div>
@@ -309,9 +301,14 @@ export function CampsiteGrid({ spots, onUpdate }: CampsiteGridProps) {
                 </Label>
                 <Switch
                   checked={formData.utilities?.water || false}
-                  onCheckedChange={(checked) => setFormData({ 
-                    ...formData, 
-                    utilities: { ...formData.utilities, water: checked } 
+                  onCheckedChange={(checked) => setFormData({
+                    ...formData,
+                    utilities: {
+                      electricity: formData.utilities?.electricity ?? false,
+                      water: Boolean(checked),
+                      sewage: formData.utilities?.sewage ?? false,
+                      wifi: formData.utilities?.wifi ?? false
+                    }
                   })}
                 />
               </div>

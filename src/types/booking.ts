@@ -1,5 +1,4 @@
 import { z } from "zod"
-import { routeSchema } from "./route"
 
 export const bookingSchema = z.object({
   id: z.number(),
@@ -9,8 +8,8 @@ export const bookingSchema = z.object({
   Trasa: z.number(), // ID trasy z typu Route
   status: z.enum(["nie_potwierdzony", "potwierdzony", "rozpoczal_splyw", "zakonczyl_splyw"]),
   paymentStatus: z.enum(["nieoplacony", "oplacony", "faktura_nie_zaplacona", "faktura_zaplacona"]),
-  dwuosobowe: z.string(),
-  jednoosobowe: z.string(),
+  dwuosobowe: z.number(),
+  jednoosobowe: z.number(),
   Telefon: z.string(),
   Email: z.string(),
   Data: z.string(),

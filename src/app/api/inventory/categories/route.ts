@@ -10,12 +10,12 @@ export async function GET() {
       const data = await fs.readFile(filePath, 'utf-8')
       const categories = JSON.parse(data)
       return NextResponse.json(categories)
-    } catch (error) {
+    } catch {
       // Jeśli plik nie istnieje, zwróć pustą tablicę
       return NextResponse.json([])
     }
-  } catch (error) {
-    console.error('Błąd podczas odczytu kategorii:', error)
+  } catch {
+    console.error('Błąd podczas odczytu kategorii')
     return NextResponse.json(
       { success: false, message: 'Błąd podczas odczytu kategorii' },
       { status: 500 }
@@ -37,8 +37,8 @@ export async function POST(request: NextRequest) {
     await fs.writeFile(filePath, JSON.stringify(categories, null, 2), 'utf-8')
     
     return NextResponse.json({ success: true, message: 'Kategorie zapisane pomyślnie' })
-  } catch (error) {
-    console.error('Błąd podczas zapisywania kategorii:', error)
+  } catch {
+    console.error('Błąd podczas zapisywania kategorii')
     return NextResponse.json(
       { success: false, message: 'Błąd podczas zapisywania kategorii' },
       { status: 500 }

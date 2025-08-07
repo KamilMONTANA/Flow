@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { CampsiteSpot } from '@/types/campsite'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -45,21 +45,7 @@ export default function NewReservationPage() {
     totalPrice: 0
   })
 
-  useEffect(() => {
-    loadSpot()
-  }, [spotId])
-
-  useEffect(() => {
-    if (spot) {
-      const nights = Math.ceil((formData.checkOut.getTime() - formData.checkIn.getTime()) / (1000 * 60 * 60 * 24))
-      setFormData(prev => ({
-        ...prev,
-        totalPrice: nights * spot.pricePerNight * formData.numberOfPeople
-      }))
-    }
-  }, [formData.checkIn, formData.checkOut, formData.numberOfPeople, spot])
-
-  const loadSpot = async () => {
+  const loadSpot = useCallback(async () => {
     try {
       const response = await fetch(`/api/campsites/spots`)
       if (response.ok) {
@@ -72,7 +58,21 @@ export default function NewReservationPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [spotId])
+
+  useEffect(() => {
+    loadSpot()
+  }, [spotId, loadSpot])
+
+  useEffect(() => {
+    if (spot) {
+      const nights = Math.ceil((formData.checkOut.getTime() - formData.checkIn.getTime()) / (1000 * 60 * 60 * 24))
+      setFormData(prev => ({
+        ...prev,
+        totalPrice: nights * spot.pricePerNight * formData.numberOfPeople
+      }))
+    }
+  }, [formData.checkIn, formData.checkOut, formData.numberOfPeople, spot])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

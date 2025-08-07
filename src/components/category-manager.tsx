@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -48,7 +48,7 @@ export function CategoryManager({ categories, setCategories }: CategoryManagerPr
       setFormData({
         name: category.name,
         color: category.color,
-        description: category.description
+        description: category.description || ''
       })
     } else {
       setEditingCategory(null)
@@ -109,7 +109,7 @@ export function CategoryManager({ categories, setCategories }: CategoryManagerPr
     setEditingCategory(null)
   }
 
-  const loadCategories = async () => {
+  const loadCategories = useCallback(async () => {
     try {
       const response = await fetch('/api/inventory/categories')
       if (response.ok) {
@@ -119,7 +119,7 @@ export function CategoryManager({ categories, setCategories }: CategoryManagerPr
     } catch (error) {
       console.error('Błąd podczas ładowania kategorii:', error)
     }
-  }
+  }, [setCategories])
 
   const saveCategories = async (newCategories: Category[]) => {
     try {
@@ -139,7 +139,7 @@ export function CategoryManager({ categories, setCategories }: CategoryManagerPr
 
   useEffect(() => {
     loadCategories()
-  }, [])
+  }, [loadCategories])
 
   return (
     <div className="flex items-center gap-2">

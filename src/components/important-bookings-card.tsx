@@ -13,45 +13,6 @@ interface ImportantBookingsCardProps {
   bookings: Booking[]
 }
 
-/**
- * Czy rezerwacja ma jakiekolwiek aktywne dodatki
- */
-const hasActiveAddons = (booking: Booking): boolean => {
-  return (
-    booking.meals === true ||
-    booking.groupTransport === true ||
-    booking.electricity === true ||
-    booking.gazebo === true ||
-    (booking.driversCount ?? 0) > 0 ||
-    (booking.childKayaks ?? 0) > 0 ||
-    (booking.deliveries ?? 0) > 0
-  )
-}
-
-/**
- * Zwraca listę aktywnych dodatków w formacie etykieta -> wartość
- * Pokazujemy tylko aktywne: boolean true lub liczba > 0
- */
-const getActiveAddons = (booking: Booking): Array<{ label: string; value: string | number | boolean; type: 'boolean' | 'number' }> => {
-  const list: Array<{ label: string; value: string | number | boolean; type: 'boolean' | 'number' }> = []
-  if (typeof booking.meals !== 'undefined') list.push({ label: "Wyżywienie", value: booking.meals, type: 'boolean' })
-  if (typeof booking.groupTransport !== 'undefined') list.push({ label: "Transport", value: booking.groupTransport, type: 'boolean' })
-  if (typeof booking.electricity !== 'undefined') list.push({ label: "Prąd", value: booking.electricity, type: 'boolean' })
-  if (typeof booking.gazebo !== 'undefined') list.push({ label: "Altana", value: booking.gazebo, type: 'boolean' })
-  if ((booking.driversCount ?? 0) > 0) list.push({ label: "Kierowcy", value: booking.driversCount as number, type: 'number' })
-  if ((booking.childKayaks ?? 0) > 0) list.push({ label: "Kapoki dziecięce", value: booking.childKayaks as number, type: 'number' })
-  if ((booking.deliveries ?? 0) > 0) list.push({ label: "Dostawki", value: booking.deliveries as number, type: 'number' })
-  return list
-}
-
-/**
- * Sprawdza czy data rezerwacji mieści się w bieżącym miesiącu i roku (wg lokalnego czasu)
- */
-const isInCurrentMonth = (dateStr: string): boolean => {
-  const d = new Date(dateStr)
-  const now = new Date()
-  return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth()
-}
 
 export function ImportantBookingsCard({ bookings }: ImportantBookingsCardProps) {
   // Tylko rezerwacje: Aktualne (dziś) lub Nadchodzące (po dziś)

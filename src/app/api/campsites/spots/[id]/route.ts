@@ -4,11 +4,32 @@ import path from 'path'
 
 const filePath = path.join(process.cwd(), 'src', 'app', 'api', 'campsites', 'spots.json')
 
-async function readCampsites() {
+// Minimalny typ dopasowany do struktury używanej w API
+type Spot = {
+  id: string
+  name: string
+  description: string
+  location: { zone: string; spotNumber: string }
+  capacity: number
+  pricePerNight: number
+  amenities: {
+    electricity: boolean
+    water: boolean
+    wifi: boolean
+    firePit: boolean
+    picnicTable: boolean
+    shower: boolean
+    toilet: boolean
+  }
+  rating: number
+  isAvailable: boolean
+}
+
+async function readCampsites(): Promise<Spot[]> {
   try {
     const data = await fs.readFile(filePath, 'utf-8')
-    return JSON.parse(data)
-  } catch (error) {
+    return JSON.parse(data) as Spot[]
+  } catch {
     return [
       {
         id: '1',
@@ -76,11 +97,11 @@ async function readCampsites() {
         rating: 4.9,
         isAvailable: true
       }
-    ]
+    ] satisfies Spot[]
   }
 }
 
-async function writeCampsites(campsites: any[]) {
+async function writeCampsites(campsites: Spot[]) {
   const dir = path.dirname(filePath)
   await fs.mkdir(dir, { recursive: true })
   await fs.writeFile(filePath, JSON.stringify(campsites, null, 2), 'utf-8')
@@ -88,15 +109,15 @@ async function writeCampsites(campsites: any[]) {
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const spotId = params.id
-    const updatedSpotData = await request.json()
+    const spotId = (await params).id
+    const updatedSpotData = (await request.json()) as Partial<Spot>
     
     const campsites = await readCampsites()
     
-    const spotIndex = campsites.findIndex((spot: any) => spot.id === spotId)
+    const spotIndex = campsites.findIndex((spot) => spot.id === spotId)
     
     if (spotIndex === -1) {
       return NextResponse.json(
@@ -105,7 +126,7 @@ export async function PUT(
       )
     }
     
-    const updatedSpot = {
+    const updatedSpot: Spot = {
       ...campsites[spotIndex],
       ...updatedSpotData,
       id: spotId
@@ -127,13 +148,13 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const spotId = params.id
+    const spotId = (await params).id
     const campsites = await readCampsites()
     
-    const spotIndex = campsites.findIndex((spot: any) => spot.id === spotId)
+    const spotIndex = campsites.findIndex((spot) => spot.id === spotId)
     
     if (spotIndex === -1) {
       return NextResponse.json(
@@ -158,13 +179,13 @@ export async function DELETE(
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const spotId = params.id
+    const spotId = (await params).id
     const campsites = await readCampsites()
     
-    const spot = campsites.find((spot: any) => spot.id === spotId)
+    const spot = campsites.find((s) => s.id === spotId)
     
     if (!spot) {
       return NextResponse.json(

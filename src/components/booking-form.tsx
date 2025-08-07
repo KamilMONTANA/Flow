@@ -77,7 +77,7 @@ export function BookingForm({ booking, onSave, onCancel }: BookingFormProps) {
     },
   })
 
-  const { handleSubmit, formState: { isSubmitting, errors }, register, setValue, watch } = form
+  const { formState: { isSubmitting, errors }, register, setValue, watch } = form
 
   const onSubmit: React.FormEventHandler<HTMLFormElement> = async (e) => {
     e.preventDefault()
@@ -132,7 +132,7 @@ export function BookingForm({ booking, onSave, onCancel }: BookingFormProps) {
       }
       onSave(newBooking)
       toast.success(booking ? "Zaktualizowano rezerwację" : "Utworzono nową rezerwację")
-    } catch (error) {
+    } catch {
       toast.error("Błąd podczas zapisywania rezerwacji")
     }
   }

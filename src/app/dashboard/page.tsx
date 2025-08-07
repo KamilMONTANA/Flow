@@ -3,6 +3,9 @@ import { DataTable } from "@/components/data-table"
 import { SectionCards } from "@/components/section-cards"
 
 import data from "./data.json"
+import type { Booking } from "@/types/booking"
+
+const bookingsData = data as Booking[]
 
 export default function Page() {
   return (
@@ -13,7 +16,7 @@ export default function Page() {
           <div className="px-4 lg:px-6">
             <ChartAreaInteractive />
           </div>
-          <DataTable data={data} />
+          <DataTable data={bookingsData} />
         </div>
       </div>
     </div>

@@ -9,7 +9,6 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { isWithinInterval, isBefore, isAfter, isEqual, isSameDay } from "date-fns"
 
 // Typ dla filtrów
 interface BookingFilters {

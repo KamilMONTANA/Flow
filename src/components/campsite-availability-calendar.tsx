@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { CampsiteSpot, CampsiteBooking } from '@/types/campsite'
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, addMonths, subMonths } from 'date-fns'
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, addMonths, subMonths } from 'date-fns'
 import { pl } from 'date-fns/locale'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -22,7 +22,7 @@ export function CampsiteAvailabilityCalendar({ spots, bookings }: CampsiteAvaila
   const monthEnd = endOfMonth(currentMonth)
   const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd })
 
-  const getBookingsForDate = (date: Date, spotId: string) => {
+  const getBookingsForDate = (date: Date) => {
     return bookings.filter(booking => {
       const checkIn = new Date(booking.checkIn)
       const checkOut = new Date(booking.checkOut)
@@ -50,13 +50,13 @@ export function CampsiteAvailabilityCalendar({ spots, bookings }: CampsiteAvaila
   const getAvailabilityForDate = (date: Date) => {
     const spotsToCheck = selectedSpot === 'all' ? spots : spots.filter(s => s.id === selectedSpot)
     
-    const available = spotsToCheck.filter(spot => {
-      const spotBookings = getBookingsForDate(date, spot.id)
-      return spot.isAvailable && spotBookings.length === 0
+    const available = spotsToCheck.filter(s => {
+      const spotBookings = getBookingsForDate(date)
+      return s.isAvailable && spotBookings.length === 0
     })
 
-    const booked = spotsToCheck.filter(spot => {
-      const spotBookings = getBookingsForDate(date, spot.id)
+    const booked = spotsToCheck.filter(() => {
+      const spotBookings = getBookingsForDate(date)
       return spotBookings.length > 0
     })
 
@@ -121,7 +121,7 @@ export function CampsiteAvailabilityCalendar({ spots, bookings }: CampsiteAvaila
 
         {daysInMonth.map(day => {
           const availability = getAvailabilityForDate(day)
-          const dayBookings = getBookingsForDate(day, selectedSpot)
+          const dayBookings = getBookingsForDate(day)
 
           return (
             <div key={day.toISOString()} className="bg-white p-2 min-h-24 border">
@@ -139,7 +139,7 @@ export function CampsiteAvailabilityCalendar({ spots, bookings }: CampsiteAvaila
                   </Badge>
                 )}
                 
-                {dayBookings.slice(0, 2).map((booking, index) => {
+                {dayBookings.slice(0, 2).map((booking) => {
                   const spot = spots.find(s => s.id === booking.spotId)
                   return (
                     <div

@@ -10,7 +10,7 @@ export async function GET() {
       const data = await fs.readFile(filePath, 'utf-8')
       const cars = JSON.parse(data)
       return NextResponse.json(cars)
-    } catch (error) {
+    } catch {
       // Jeśli plik nie istnieje, zwróć domyślne dane
       const defaultCars = [
         {
@@ -38,8 +38,8 @@ export async function GET() {
       ]
       return NextResponse.json(defaultCars)
     }
-  } catch (error) {
-    console.error('Błąd podczas odczytu samochodów:', error)
+  } catch {
+    console.error('Błąd podczas odczytu samochodów')
     return NextResponse.json(
       { success: false, message: 'Błąd podczas odczytu samochodów' },
       { status: 500 }
@@ -61,8 +61,8 @@ export async function POST(request: NextRequest) {
     await fs.writeFile(filePath, JSON.stringify(cars, null, 2), 'utf-8')
     
     return NextResponse.json({ success: true, message: 'Samochody zapisane pomyślnie' })
-  } catch (error) {
-    console.error('Błąd podczas zapisywania samochodów:', error)
+  } catch {
+    console.error('Błąd podczas zapisywania samochodów')
     return NextResponse.json(
       { success: false, message: 'Błąd podczas zapisywania samochodów' },
       { status: 500 }

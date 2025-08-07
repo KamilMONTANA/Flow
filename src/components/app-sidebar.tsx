@@ -10,7 +10,6 @@ import {
   IconFolder,
   IconInnerShadowTop,
   IconListDetails,
-  IconPlus,
   IconSettings,
   IconTent,
   IconUsers,

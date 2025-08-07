@@ -6,11 +6,7 @@ import {
   IconChevronRight,
   IconChevronsLeft,
   IconChevronsRight,
-  IconCircleCheckFilled,
   IconDotsVertical,
-  IconLayoutColumns,
-  IconLoader,
-  IconPlus,
   IconArrowUp,
   IconArrowDown,
   IconArrowsUpDown,
@@ -25,7 +21,6 @@ import {
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
-  Row,
   SortingState,
   useReactTable,
   VisibilityState,
@@ -49,7 +44,6 @@ import {
 } from "@/components/ui/drawer"
 import {
   DropdownMenu,
-  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
@@ -110,7 +104,7 @@ function TableCellViewer({ item, onUpdate }: {
       }
       
       toast.success('Zapisano zmiany')
-    } catch (error) {
+    } catch {
       toast.error('Błąd podczas zapisywania')
     } finally {
       setIsSaving(false)
@@ -740,10 +734,6 @@ export function DataTable({
   })
 
   // Funkcja do otwierania panelu edycji
-  const handleOpenEdit = (booking: Booking) => {
-    setEditingBooking(booking);
-    setIsDrawerOpen(true);
-  };
   // Funkcja do otwierania panelu tworzenia (sidebar wywołuje setIsDrawerOpen(true), a my ustawiamy editingBooking na undefined)
   React.useEffect(() => {
     if (isDrawerOpen && !editingBooking) {

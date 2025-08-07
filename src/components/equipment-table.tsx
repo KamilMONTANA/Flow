@@ -15,7 +15,6 @@ import {
 } from '@/components/ui/table'
 import {
   Drawer,
-  DrawerClose,
   DrawerContent,
   DrawerDescription,
   DrawerFooter,
@@ -33,32 +32,6 @@ import {
 import { Plus, Edit, Trash2 } from 'lucide-react'
 import { v4 as uuidv4 } from 'uuid'
 
-const initialEquipment: Equipment[] = [
-  {
-    id: '1',
-    name: 'Kajak jednoosobowy',
-    quantity: 5,
-    description: 'Kajak turystyczny dla jednej osoby',
-    condition: 'good',
-    categoryId: '1',
-  },
-  {
-    id: '2',
-    name: 'Kajak dwuosobowy',
-    quantity: 3,
-    description: 'Kajak turystyczny dla dwóch osób',
-    condition: 'good',
-    categoryId: '1',
-  },
-  {
-    id: '3',
-    name: 'Wiosło',
-    quantity: 15,
-    description: 'Wiosło kajakowe',
-    condition: 'good',
-    categoryId: '1',
-  },
-]
 
 interface EquipmentTableProps {
   categories: Category[]

@@ -15,7 +15,6 @@ import {
 } from '@/components/ui/table'
 import {
   Drawer,
-  DrawerClose,
   DrawerContent,
   DrawerDescription,
   DrawerFooter,
@@ -33,30 +32,6 @@ import {
 import { Plus, Edit, Trash2 } from 'lucide-react'
 import { v4 as uuidv4 } from 'uuid'
 
-const initialCars: Car[] = [
-  {
-    id: '1',
-    brand: 'Volkswagen',
-    model: 'Transporter',
-    year: 2020,
-    licensePlate: 'KR12345',
-    capacity: 9,
-    quantity: 2,
-    condition: 'good',
-    categoryId: '3',
-  },
-  {
-    id: '2',
-    brand: 'Mercedes',
-    model: 'Sprinter',
-    year: 2022,
-    licensePlate: 'KR67890',
-    capacity: 20,
-    quantity: 1,
-    condition: 'new',
-    categoryId: '3',
-  },
-]
 
 interface CarsTableProps {
   categories: Category[]

@@ -11,9 +11,8 @@ import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Plus, Edit, Trash2, Search, Filter, Eye, Calendar, Users, MapPin, Star, Zap, Droplet, Wifi, Check, X } from 'lucide-react'
+import { Plus, Edit, Trash2, Search, Eye, Calendar, Users, MapPin, Star, Zap, Droplet, Wifi } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { CampsiteBooking } from '@/types/campsite'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 
 interface Spot {
@@ -74,7 +73,6 @@ export default function CampsitesPage() {
   const [editingSpot, setEditingSpot] = useState<Spot | null>(null)
   const [deletingSpot, setDeletingSpot] = useState<Spot | null>(null)
   const [isSaving, setIsSaving] = useState(false)
-  const router = useRouter()
 
   const [formData, setFormData] = useState<Partial<Spot>>({
     name: '',
@@ -786,24 +784,6 @@ function SpotDetailView({ spot, bookings, onBack, onRefresh }: {
     }
   }
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target
-    setEditFormData(prev => ({ ...prev, [name]: value }))
-  }
-
-  const handleLocationChange = (field: keyof Spot['location'], value: string) => {
-    setEditFormData(prev => ({
-      ...prev,
-      location: { ...prev.location!, [field]: value }
-    }))
-  }
-
-  const handleAmenitiesChange = (key: keyof Spot['amenities'], value: boolean) => {
-    setEditFormData(prev => ({
-      ...prev,
-      amenities: { ...prev.amenities!, [key]: value }
-    }))
-  }
 
   const openEditReservation = (booking: Booking) => {
     setEditingReservation(booking)

@@ -4,17 +4,24 @@ import path from 'path'
 
 const filePath = path.join(process.cwd(), 'src', 'app', 'api', 'campsites', 'bookings.json')
 
+// Typ dla rezerwacji
+type Booking = {
+  id: string
+  createdAt: string
+  updatedAt: string
+} & Record<string, unknown>
+
 export async function GET() {
   try {
     try {
       const data = await fs.readFile(filePath, 'utf-8')
       const bookings = JSON.parse(data)
       return NextResponse.json(bookings)
-    } catch (error) {
+    } catch {
       return NextResponse.json([])
     }
-  } catch (error) {
-    console.error('Błąd podczas odczytu rezerwacji:', error)
+  } catch {
+    console.error('Błąd podczas odczytu rezerwacji')
     return NextResponse.json(
       { success: false, message: 'Błąd podczas odczytu rezerwacji' },
       { status: 500 }
@@ -30,7 +37,7 @@ export async function POST(request: NextRequest) {
     try {
       const data = await fs.readFile(filePath, 'utf-8')
       bookings = JSON.parse(data)
-    } catch (error) {
+    } catch {
       bookings = []
     }
     
@@ -49,8 +56,8 @@ export async function POST(request: NextRequest) {
     await fs.writeFile(filePath, JSON.stringify(bookings, null, 2), 'utf-8')
     
     return NextResponse.json({ success: true, message: 'Rezerwacja zapisana pomyślnie', booking: newBooking })
-  } catch (error) {
-    console.error('Błąd podczas zapisywania rezerwacji:', error)
+  } catch {
+    console.error('Błąd podczas zapisywania rezerwacji')
     return NextResponse.json(
       { success: false, message: 'Błąd podczas zapisywania rezerwacji' },
       { status: 500 }
@@ -62,18 +69,18 @@ export async function PUT(request: NextRequest) {
   try {
     const { id, ...updateData } = await request.json()
     
-    let bookings = []
+    let bookings: Booking[] = []
     try {
       const data = await fs.readFile(filePath, 'utf-8')
       bookings = JSON.parse(data)
-    } catch (error) {
+    } catch {
       return NextResponse.json(
         { success: false, message: 'Nie znaleziono rezerwacji' },
         { status: 404 }
       )
     }
     
-    const bookingIndex = bookings.findIndex(b => b.id === id)
+    const bookingIndex = bookings.findIndex((b: Booking) => b.id === id)
     if (bookingIndex === -1) {
       return NextResponse.json(
         { success: false, message: 'Nie znaleziono rezerwacji' },
@@ -90,8 +97,8 @@ export async function PUT(request: NextRequest) {
     await fs.writeFile(filePath, JSON.stringify(bookings, null, 2), 'utf-8')
     
     return NextResponse.json({ success: true, message: 'Rezerwacja zaktualizowana', booking: bookings[bookingIndex] })
-  } catch (error) {
-    console.error('Błąd podczas aktualizacji rezerwacji:', error)
+  } catch {
+    console.error('Błąd podczas aktualizacji rezerwacji')
     return NextResponse.json(
       { success: false, message: 'Błąd podczas aktualizacji rezerwacji' },
       { status: 500 }

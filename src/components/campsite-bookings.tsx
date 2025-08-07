@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Calendar, Mail, Phone, Users, DollarSign, Clock, Plus } from 'lucide-react'
+import { Users, Plus } from 'lucide-react'
 import {
   Dialog,
   DialogContent,

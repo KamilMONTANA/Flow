@@ -10,7 +10,7 @@ export async function GET() {
       const data = await fs.readFile(filePath, 'utf-8')
       const equipment = JSON.parse(data)
       return NextResponse.json(equipment)
-    } catch (error) {
+    } catch {
       // Jeśli plik nie istnieje, zwróć domyślne dane
       const defaultEquipment = [
         {
@@ -40,8 +40,8 @@ export async function GET() {
       ]
       return NextResponse.json(defaultEquipment)
     }
-  } catch (error) {
-    console.error('Błąd podczas odczytu sprzętu:', error)
+  } catch {
+    console.error('Błąd podczas odczytu sprzętu')
     return NextResponse.json(
       { success: false, message: 'Błąd podczas odczytu sprzętu' },
       { status: 500 }
@@ -63,8 +63,8 @@ export async function POST(request: NextRequest) {
     await fs.writeFile(filePath, JSON.stringify(equipment, null, 2), 'utf-8')
     
     return NextResponse.json({ success: true, message: 'Sprzęt zapisany pomyślnie' })
-  } catch (error) {
-    console.error('Błąd podczas zapisywania sprzętu:', error)
+  } catch {
+    console.error('Błąd podczas zapisywania sprzętu')
     return NextResponse.json(
       { success: false, message: 'Błąd podczas zapisywania sprzętu' },
       { status: 500 }
