@@ -1,0 +1,34 @@
+[
+  {
+    "id": "1",
+    "name": "Kajak jednoosobowy",
+    "quantity": 22,
+    "description": "Kajak turystyczny dla jednej osoby",
+    "condition": "good",
+    "categoryId": "9e1b29db-f3cb-4538-9002-562f0aa40b1b"
+  },
+  {
+    "id": "2",
+    "name": "Kajak dwuosobowy",
+    "quantity": 88,
+    "description": "Kajak turystyczny dla dwóch osób",
+    "condition": "good",
+    "categoryId": "ea526a31-3a4d-4e21-bc83-ad14cd8f8f25"
+  },
+  {
+    "id": "3",
+    "name": "Wiosło",
+    "quantity": 200,
+    "description": "Wiosło kajakowe",
+    "condition": "good",
+    "categoryId": "9aece508-7849-45ce-8ff9-e1ca0771f3e0"
+  },
+  {
+    "id": "222460cb-39e2-4fd0-913b-8cfaf97de26f",
+    "name": "Kapok",
+    "quantity": 200,
+    "description": "Kamizelka ratunkowa",
+    "condition": "good",
+    "categoryId": "617052a4-2f82-448c-a090-d9d4cecee175"
+  }
+]
