@@ -59,17 +59,17 @@ const data = {
     },
     {
       title: "Dokumenty",
-      url: "#",
+      url: "/documents",
       icon: IconFileDescription,
     },
     {
       title: "Analityka",
-      url: "#",
+      url: "/analytics",
       icon: IconChartBar,
     },
     {
       title: "Zespół",
-      url: "#",
+      url: "/team",
       icon: IconUsers,
     },
   ],

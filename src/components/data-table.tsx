@@ -217,6 +217,31 @@ function TableCellViewer({ item, onUpdate }: {
                   onChange={(e) => handleInputChange('Data', e.target.value)}
                 />
               </div>
+              <div className="flex flex-col gap-3">
+                <Label htmlFor="godzinaSplywu">Godzina spływu</Label>
+                <Select
+                  value={editedData.godzinaSplywu || ""}
+                  onValueChange={(value) => handleInputChange('godzinaSplywu', value)}
+                >
+                  <SelectTrigger id="godzinaSplywu" className="w-full">
+                    <SelectValue placeholder="Wybierz godzinę" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Brak</SelectItem>
+                    <SelectItem value="08:00">08:00</SelectItem>
+                    <SelectItem value="09:00">09:00</SelectItem>
+                    <SelectItem value="10:00">10:00</SelectItem>
+                    <SelectItem value="11:00">11:00</SelectItem>
+                    <SelectItem value="12:00">12:00</SelectItem>
+                    <SelectItem value="13:00">13:00</SelectItem>
+                    <SelectItem value="14:00">14:00</SelectItem>
+                    <SelectItem value="15:00">15:00</SelectItem>
+                    <SelectItem value="16:00">16:00</SelectItem>
+                    <SelectItem value="17:00">17:00</SelectItem>
+                    <SelectItem value="18:00">18:00</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col gap-3">
@@ -581,10 +606,15 @@ export function DataTable({
     },
     {
       accessorKey: "Data",
-      header: "Data",
+      header: "Data i godzina",
       cell: ({ row }) => (
         <div className="text-sm">
           {row.original.Data}
+          {row.original.godzinaSplywu && (
+            <span className="ml-2 text-blue-600 font-medium">
+              o {row.original.godzinaSplywu}
+            </span>
+          )}
         </div>
       ),
       enableSorting: true,
@@ -839,6 +869,7 @@ export function DataTable({
                         <TableCell colSpan={columns.length} className="bg-muted/50">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-2 p-4" tabIndex={0} aria-label={`Szczegóły rezerwacji dla ${row.original.Imie} ${row.original.Nazwisko}`}> 
                             <div><span className="font-medium">Email:</span> {row.original.Email}</div>
+                            <div><span className="font-medium">Data i godzina:</span> {row.original.Data} {row.original.godzinaSplywu && `o ${row.original.godzinaSplywu}`}</div>
                             <div className="flex items-center gap-2"><span className="font-medium">Wyżywienie:</span> {row.original.meals ? <IconCheck className="text-green-500" /> : <IconX className="text-red-500" />}</div>
                             <div className="flex items-center gap-2"><span className="font-medium">Transport:</span> {row.original.groupTransport ? <IconCheck className="text-green-500" /> : <IconX className="text-red-500" />}</div>
                             <div className="flex items-center gap-2"><span className="font-medium">Prąd:</span> {row.original.electricity ? <IconCheck className="text-green-500" /> : <IconX className="text-red-500" />}</div>

@@ -39,9 +39,16 @@ const formSchema = z.object({
   jednoosobowe: z.number().min(0),
   Telefon: z.string().regex(/\d+/, "Nieprawidłowy format numeru telefonu"),
   Email: z.string().email("Nieprawidłowy format email"),
-  Data: z.string().refine((date) => new Date(date) >= new Date(), {
+  Data: z.string().refine((date) => {
+    const selectedDate = new Date(date);
+    const today = new Date();
+    selectedDate.setHours(0, 0, 0, 0);
+    today.setHours(0, 0, 0, 0);
+    return selectedDate >= today;
+  }, {
     message: "Data rezerwacji nie może być z przeszłości",
   }),
+  godzinaSplywu: z.string().optional(),
   meals: z.boolean(),
   groupTransport: z.boolean(),
   electricity: z.boolean(),
@@ -49,6 +56,10 @@ const formSchema = z.object({
   driversCount: z.number().min(0),
   childKayaks: z.number().min(0),
   deliveries: z.number().min(0),
+  // Akceptacje regulaminów
+  acceptKayakTerms: z.boolean().refine(v => v === true, "Wymagana akceptacja regulaminu wypożyczenia kajaków"),
+  acceptCampsiteTerms: z.boolean().optional(),
+  
 })
 
 export function BookingForm({ booking, onSave, onCancel }: BookingFormProps) {
@@ -62,11 +73,12 @@ export function BookingForm({ booking, onSave, onCancel }: BookingFormProps) {
       Trasa: booking?.Trasa || 1,
       status: booking?.status || "nie_potwierdzony",
       paymentStatus: booking?.paymentStatus || "nieoplacony",
-      dwuosobowe: typeof booking?.dwuosobowe === "string" ? parseInt(booking!.dwuosobowe as unknown as string, 10) || 0 : (booking?.dwuosobowe ?? 0),
-      jednoosobowe: typeof booking?.jednoosobowe === "string" ? parseInt(booking!.jednoosobowe as unknown as string, 10) || 0 : (booking?.jednoosobowe ?? 0),
+      dwuosobowe: Number(booking?.dwuosobowe) || 0,
+      jednoosobowe: Number(booking?.jednoosobowe) || 0,
       Telefon: booking?.Telefon || "",
       Email: booking?.Email || "",
       Data: booking?.Data || format(new Date(), "yyyy-MM-dd"),
+      godzinaSplywu: booking?.godzinaSplywu || "",
       meals: booking?.meals || false,
       groupTransport: booking?.groupTransport || false,
       electricity: booking?.electricity || false,
@@ -74,16 +86,68 @@ export function BookingForm({ booking, onSave, onCancel }: BookingFormProps) {
       driversCount: booking?.driversCount ?? 0,
       childKayaks: booking?.childKayaks ?? 0,
       deliveries: booking?.deliveries ?? 0,
+      acceptKayakTerms: false,
+      acceptCampsiteTerms: false,
+      
     },
   })
 
-  const { formState: { isSubmitting, errors }, register, setValue, watch } = form
+  const { handleSubmit, formState: { isSubmitting, errors }, register, setValue, watch } = form
 
-  const onSubmit: React.FormEventHandler<HTMLFormElement> = async (e) => {
-    e.preventDefault()
+  React.useEffect(() => {
+    if (!booking && routes.length > 0) {
+      setValue("Trasa", routes[0].id);
+    }
+  }, [booking, routes, setValue]);
+
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      const values = form.getValues()
       const now = new Date().toISOString()
+      // Wymuś akceptacje: kajaki zawsze, pole namiotowe tylko dla tras odpowiadających polu (przykład: Trasa id === 0 traktowana jako pole?)
+      // W tym projekcie nie mamy mapowania Trasa->typ usługi. Przyjmijmy regułę:
+      // - Jeżeli liczba kajaków > 0 => wymagaj acceptKayakTerms === true.
+      // - Jeżeli electricity/gazebo lub inne campowe dodatki => wymagaj acceptCampsiteTerms === true.
+      const requiresKayak = (values.dwuosobowe > 0) || (values.jednoosobowe > 0)
+      const requiresCampsite = values.electricity || values.gazebo
+      if (requiresKayak && !values.acceptKayakTerms) {
+        throw new Error("Musisz zaakceptować regulamin wypożyczenia kajaków")
+      }
+      if (requiresCampsite && !values.acceptCampsiteTerms) {
+        throw new Error("Musisz zaakceptować regulamin pola namiotowego")
+      }
+      // Rejestr audytu akceptacji (opcjonalnie, bez blokowania zapisu)
+      try {
+        if (values.acceptKayakTerms) {
+          await fetch('/api/documents/accept', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              type: 'kayak',
+              version: '1.0',
+              acceptedAt: now,
+              firstName: values.Imie,
+              lastName: values.Nazwisko,
+              email: values.Email,
+              phone: values.Telefon,
+            })
+          })
+        }
+        if (values.acceptCampsiteTerms) {
+          await fetch('/api/documents/accept', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              type: 'campsite',
+              version: '1.0',
+              acceptedAt: now,
+              firstName: values.Imie,
+              lastName: values.Nazwisko,
+              email: values.Email,
+              phone: values.Telefon,
+            })
+          })
+        }
+      } catch {}
       const newBooking: Booking = {
         id: booking?.id || Date.now(),
         Imie: values.Imie,
@@ -96,6 +160,7 @@ export function BookingForm({ booking, onSave, onCancel }: BookingFormProps) {
         Telefon: values.Telefon,
         Email: values.Email,
         Data: values.Data,
+        godzinaSplywu: values.godzinaSplywu || undefined,
         meals: values.meals,
         groupTransport: values.groupTransport,
         electricity: values.electricity,
@@ -138,7 +203,7 @@ export function BookingForm({ booking, onSave, onCancel }: BookingFormProps) {
   }
 
   return (
-    <form onSubmit={onSubmit} className="space-y-6 w-full max-w-full sm:max-w-2xl lg:max-w-5xl">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 w-full max-w-full sm:max-w-2xl lg:max-w-5xl">
       {/* Dane osobowe */}
       <div className="mb-6">
         <h3 className="text-base sm:text-lg font-semibold mb-3">Dane osobowe</h3>
@@ -227,6 +292,32 @@ export function BookingForm({ booking, onSave, onCancel }: BookingFormProps) {
               aria-label="Data rezerwacji"
             />
             {errors.Data && <p className="text-xs text-red-500">{errors.Data.message}</p>}
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="godzinaSplywu">Godzina spływu</Label>
+            <Select
+              value={watch("godzinaSplywu") || "none"}
+              onValueChange={(value) => setValue("godzinaSplywu", value === "none" ? undefined : value)}
+            >
+              <SelectTrigger id="godzinaSplywu" aria-label="Godzina spływu" className="w-full">
+                <SelectValue placeholder="Wybierz godzinę spływu" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Brak</SelectItem>
+                <SelectItem value="08:00">08:00</SelectItem>
+                <SelectItem value="09:00">09:00</SelectItem>
+                <SelectItem value="10:00">10:00</SelectItem>
+                <SelectItem value="11:00">11:00</SelectItem>
+                <SelectItem value="12:00">12:00</SelectItem>
+                <SelectItem value="13:00">13:00</SelectItem>
+                <SelectItem value="14:00">14:00</SelectItem>
+                <SelectItem value="15:00">15:00</SelectItem>
+                <SelectItem value="16:00">16:00</SelectItem>
+                <SelectItem value="17:00">17:00</SelectItem>
+                <SelectItem value="18:00">18:00</SelectItem>
+              </SelectContent>
+            </Select>
+            {errors.godzinaSplywu && <p className="text-xs text-red-500">{errors.godzinaSplywu.message}</p>}
           </div>
           <div className="space-y-2">
             <Label htmlFor="dwuosobowe">Kajaki dwuosobowe</Label>
@@ -371,6 +462,35 @@ export function BookingForm({ booking, onSave, onCancel }: BookingFormProps) {
               aria-label="Ilość dostawek"
             />
             {errors.deliveries && <p className="text-sm text-red-500">{errors.deliveries.message}</p>}
+          </div>
+        </div>
+      </div>
+
+      {/* Akceptacje regulaminów */}
+      <div className="mb-6">
+        <h3 className="text-base sm:text-lg font-semibold mb-3">Regulaminy i zgody</h3>
+        <div className="space-y-3">
+          <div className="flex items-center justify-between rounded-md border p-3">
+            <div className="flex items-center gap-3">
+              <Checkbox
+                id="acceptKayakTerms"
+                checked={watch("acceptKayakTerms")}
+                onCheckedChange={(checked) => setValue("acceptKayakTerms", Boolean(checked))}
+                aria-label="Akceptuję regulamin wypożyczenia kajaków"
+              />
+              <Label htmlFor="acceptKayakTerms" className="mb-0">Akceptuję regulamin wypożyczenia kajaków (wymagane przy rezerwacji kajaków)</Label>
+            </div>
+          </div>
+          <div className="flex items-center justify-between rounded-md border p-3">
+            <div className="flex items-center gap-3">
+              <Checkbox
+                id="acceptCampsiteTerms"
+                checked={watch("acceptCampsiteTerms")}
+                onCheckedChange={(checked) => setValue("acceptCampsiteTerms", Boolean(checked))}
+                aria-label="Akceptuję regulamin pola namiotowego"
+              />
+              <Label htmlFor="acceptCampsiteTerms" className="mb-0">Akceptuję regulamin pola namiotowego (wymagane przy rezerwacji pola)</Label>
+            </div>
           </div>
         </div>
       </div>

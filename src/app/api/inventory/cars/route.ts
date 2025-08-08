@@ -1,65 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server'
-import fs from 'fs/promises'
-import path from 'path'
+import { createSupabaseAdminClient } from '@/lib/supabase/server'
 
 export async function GET() {
   try {
-    const filePath = path.join(process.cwd(), 'src', 'app', 'api', 'inventory', 'cars.json')
-    
-    try {
-      const data = await fs.readFile(filePath, 'utf-8')
-      const cars = JSON.parse(data)
-      return NextResponse.json(cars)
-    } catch {
-      // Jeśli plik nie istnieje, zwróć domyślne dane
-      const defaultCars = [
-        {
-          id: '1',
-          brand: 'Volkswagen',
-          model: 'Transporter',
-          year: 2020,
-          licensePlate: 'KR12345',
-          capacity: 9,
-          quantity: 2,
-          condition: 'good',
-          categoryId: '3',
-        },
-        {
-          id: '2',
-          brand: 'Mercedes',
-          model: 'Sprinter',
-          year: 2022,
-          licensePlate: 'KR67890',
-          capacity: 20,
-          quantity: 1,
-          condition: 'new',
-          categoryId: '3',
-        },
-      ]
-      return NextResponse.json(defaultCars)
-    }
-  } catch {
+    const supabase = createSupabaseAdminClient()
+    const { data, error } = await supabase.from('cars').select('payload')
+    if (error) throw error
+    const cars = (data ?? []).map((r: any) => r.payload)
+    return NextResponse.json(cars)
+  } catch (e) {
     console.error('Błąd podczas odczytu samochodów')
-    return NextResponse.json(
-      { success: false, message: 'Błąd podczas odczytu samochodów' },
-      { status: 500 }
-    )
+    // Fallback: pusta lista zamiast 500
+    return NextResponse.json([], { status: 200 })
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
+    const supabase = createSupabaseAdminClient()
     const cars = await request.json()
-    
-    const filePath = path.join(process.cwd(), 'src', 'app', 'api', 'inventory', 'cars.json')
-    
-    // Upewnij się, że katalog istnieje
-    const dir = path.dirname(filePath)
-    await fs.mkdir(dir, { recursive: true })
-    
-    // Zapisz dane do pliku
-    await fs.writeFile(filePath, JSON.stringify(cars, null, 2), 'utf-8')
-    
+    // Kontrakt: zapis pełnej listy
+    const { error: delError } = await supabase.from('cars').delete().neq('id', null)
+    if (delError) throw delError
+    const rows = (cars as any[]).map((c) => ({ id: c.id, payload: c }))
+    const { error } = await supabase.from('cars').insert(rows)
+    if (error) throw error
     return NextResponse.json({ success: true, message: 'Samochody zapisane pomyślnie' })
   } catch {
     console.error('Błąd podczas zapisywania samochodów')

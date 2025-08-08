@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import fs from 'fs/promises'
-import path from 'path'
+import { createSupabaseAdminClient } from '@/lib/supabase/server'
  
 // Minimalny typ danych rezerwacji zgodny z /api/data model
 type BookingRecord = {
@@ -33,56 +32,47 @@ type BookingRecord = {
 export async function POST(request: NextRequest) {
   try {
     const { routeId } = (await request.json()) as { routeId: number }
-    
-    // Ścieżka do pliku data.json
-    const filePath = path.join(process.cwd(), 'src', 'app', 'dashboard', 'data.json')
-    
-    // Odczytaj dane rezerwacji
-    const data = await fs.readFile(filePath, 'utf-8')
-    const bookings = JSON.parse(data) as BookingRecord[]
-    
-    // Znajdź rezerwacje, które wykorzystują usuwaną trasę
-    const affectedBookings = bookings.filter((booking) => booking.Trasa === routeId)
-    
-    if (affectedBookings.length > 0) {
-      // Zaktualizuj rezerwacje - ustaw trasę na 0 (brak trasy)
-      const nowIso = new Date().toISOString()
-      const updatedBookings: BookingRecord[] = bookings.map((booking) => {
-        if (booking.Trasa === routeId) {
-          return {
-            ...booking,
-            Trasa: 0,
-            updatedAt: nowIso,
-            history: [
-              ...(booking.history ?? []),
-              {
-                timestamp: nowIso,
-                action: "route_deleted",
-                status: booking.status,
-                paymentStatus: booking.paymentStatus,
-                notes: `Trasa została usunięta. Rezerwacja wymaga aktualizacji.`
-              }
-            ]
+    const supabase = createSupabaseAdminClient()
+
+    // Pobierz rezerwacje z tabeli reservations, gdzie Trasa = routeId
+    const { data, error } = await supabase
+      .from('reservations')
+      .select('id, payload')
+      .filter('payload->>Trasa', 'eq', String(routeId))
+    if (error) throw error
+
+    const nowIso = new Date().toISOString()
+    let affected = 0
+    for (const row of data ?? []) {
+      const booking = row.payload as BookingRecord
+      const updated: BookingRecord = {
+        ...booking,
+        Trasa: 0,
+        updatedAt: nowIso,
+        history: [
+          ...(booking.history ?? []),
+          {
+            timestamp: nowIso,
+            action: 'route_deleted',
+            status: booking.status,
+            paymentStatus: booking.paymentStatus,
+            notes: 'Trasa została usunięta. Rezerwacja wymaga aktualizacji.'
           }
-        }
-        return booking
-      })
-      
-      // Zapisz zaktualizowane dane
-      await fs.writeFile(filePath, JSON.stringify(updatedBookings, null, 2), 'utf-8')
-      
-      return NextResponse.json({
-        success: true,
-        message: `Zaktualizowano ${affectedBookings.length} rezerwacji po usunięciu trasy`,
-        affectedBookings: affectedBookings.length
-      })
-    } else {
-      return NextResponse.json({
-        success: true,
-        message: "Nie znaleziono rezerwacji wykorzystujących usuwaną trasę",
-        affectedBookings: 0
-      })
+        ]
+      }
+      const { error: upError } = await supabase
+        .from('reservations')
+        .update({ payload: updated })
+        .eq('id', row.id)
+      if (upError) throw upError
+      affected += 1
     }
+
+    return NextResponse.json({
+      success: true,
+      message: `Zaktualizowano ${affected} rezerwacji po usunięciu trasy`,
+      affectedBookings: affected
+    })
   } catch (error) {
     console.error('Błąd podczas aktualizacji rezerwacji:', error)
     return NextResponse.json(

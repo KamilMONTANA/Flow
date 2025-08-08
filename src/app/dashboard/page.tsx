@@ -1,13 +1,19 @@
 import { ChartAreaInteractive } from "@/components/chart-area-interactive"
 import { DataTable } from "@/components/data-table"
 import { SectionCards } from "@/components/section-cards"
-
-import data from "./data.json"
 import type { Booking } from "@/types/booking"
 
-const bookingsData = data as Booking[]
+export default async function Page() {
+  let bookingsData: Booking[] = []
+  try {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL ?? ''}/api/data`, { cache: 'no-store' })
+    if (res.ok) {
+      bookingsData = await res.json()
+    }
+  } catch {
+    bookingsData = []
+  }
 
-export default function Page() {
   return (
     <div className="flex flex-1 flex-col">
       <div className="@container/main flex flex-1 flex-col gap-2">

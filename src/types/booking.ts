@@ -13,6 +13,7 @@ export const bookingSchema = z.object({
   Telefon: z.string(),
   Email: z.string(),
   Data: z.string(),
+  godzinaSplywu: z.string().optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
   // Nowe pola

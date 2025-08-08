@@ -1,8 +1,16 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+This is a [Next.js](https://nextjs.org) project integrated with Supabase for persistence.
 
 ## Getting Started
 
-First, run the development server:
+First, set environment variables in `.env.local`:
+
+```
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
+```
+
+Then, run the development server:
 
 ```bash
 npm run dev
@@ -15,6 +23,10 @@ bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+## Supabase schema
+
+Use `supabase/schema.sql` in Supabase SQL editor to provision tables. API routes operate on `jsonb` payloads to keep frontend contracts stable.
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 

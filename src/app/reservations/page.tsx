@@ -4,6 +4,7 @@ import * as React from "react"
 import { SidebarInset } from "@/components/ui/sidebar"
 import { DataTable } from "@/components/data-table"
 import { Booking } from "@/types/booking"
+ 
 import { ImportantBookingsCard } from "@/components/important-bookings-card"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { Input } from "@/components/ui/input"

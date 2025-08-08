@@ -1,41 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server'
-import fs from 'fs/promises'
-import path from 'path'
+import { createSupabaseAdminClient } from '@/lib/supabase/server'
 
 export async function GET() {
   try {
-    const filePath = path.join(process.cwd(), 'src', 'app', 'api', 'inventory', 'categories.json')
-    
-    try {
-      const data = await fs.readFile(filePath, 'utf-8')
-      const categories = JSON.parse(data)
-      return NextResponse.json(categories)
-    } catch {
-      // Jeśli plik nie istnieje, zwróć pustą tablicę
-      return NextResponse.json([])
-    }
+    const supabase = createSupabaseAdminClient()
+    const { data, error } = await supabase.from('categories').select('payload')
+    if (error) throw error
+    const categories = (data ?? []).map((r: any) => r.payload)
+    return NextResponse.json(categories)
   } catch {
     console.error('Błąd podczas odczytu kategorii')
-    return NextResponse.json(
-      { success: false, message: 'Błąd podczas odczytu kategorii' },
-      { status: 500 }
-    )
+    // Fallback: pusta lista zamiast 500
+    return NextResponse.json([], { status: 200 })
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
+    const supabase = createSupabaseAdminClient()
     const categories = await request.json()
-    
-    const filePath = path.join(process.cwd(), 'src', 'app', 'api', 'inventory', 'categories.json')
-    
-    // Upewnij się, że katalog istnieje
-    const dir = path.dirname(filePath)
-    await fs.mkdir(dir, { recursive: true })
-    
-    // Zapisz dane do pliku
-    await fs.writeFile(filePath, JSON.stringify(categories, null, 2), 'utf-8')
-    
+    const { error: delError } = await supabase.from('categories').delete().neq('id', null)
+    if (delError) throw delError
+    const rows = (categories as any[]).map((c) => ({ id: c.id, payload: c }))
+    const { error } = await supabase.from('categories').insert(rows)
+    if (error) throw error
     return NextResponse.json({ success: true, message: 'Kategorie zapisane pomyślnie' })
   } catch {
     console.error('Błąd podczas zapisywania kategorii')

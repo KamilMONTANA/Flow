@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import fs from 'fs/promises'
-import path from 'path'
+import { createSupabaseAdminClient } from '@/lib/supabase/server'
 
-const filePath = path.join(process.cwd(), 'src', 'app', 'api', 'campsites', 'spots.json')
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+export const revalidate = 0
 
 // Minimalny typ dla działki używany w tym module
 type Spot = {
@@ -26,85 +27,12 @@ type Spot = {
 }
 
 async function readCampsites(): Promise<Spot[]> {
-  try {
-    const data = await fs.readFile(filePath, 'utf-8')
-    return JSON.parse(data) as Spot[]
-  } catch {
-    return [
-      {
-        id: '1',
-        name: 'Działka A1',
-        description: 'Cicha działka w lesie, idealna dla rodzin',
-        location: {
-          zone: 'A',
-          spotNumber: '1'
-        },
-        capacity: 4,
-        pricePerNight: 80,
-        amenities: {
-          electricity: true,
-          water: false,
-          wifi: true,
-          firePit: true,
-          picnicTable: true,
-          shower: false,
-          toilet: false
-        },
-        rating: 4.5,
-        isAvailable: true
-      },
-      {
-        id: '2',
-        name: 'Działka B3',
-        description: 'Działka z pełnym przyłączem, idealna dla kamperów',
-        location: {
-          zone: 'B',
-          spotNumber: '3'
-        },
-        capacity: 6,
-        pricePerNight: 120,
-        amenities: {
-          electricity: true,
-          water: true,
-          wifi: true,
-          firePit: false,
-          picnicTable: true,
-          shower: true,
-          toilet: true
-        },
-        rating: 4.8,
-        isAvailable: true
-      },
-      {
-        id: '3',
-        name: 'Glamping Premium',
-        description: 'Luksusowy namiot glampingowy z łazienką',
-        location: {
-          zone: 'Premium',
-          spotNumber: '1'
-        },
-        capacity: 2,
-        pricePerNight: 250,
-        amenities: {
-          electricity: true,
-          water: true,
-          wifi: true,
-          firePit: false,
-          picnicTable: false,
-          shower: true,
-          toilet: true
-        },
-        rating: 4.9,
-        isAvailable: true
-      }
-    ] satisfies Spot[]
-  }
-}
-
-async function writeCampsites(campsites: Spot[]) {
-  const dir = path.dirname(filePath)
-  await fs.mkdir(dir, { recursive: true })
-  await fs.writeFile(filePath, JSON.stringify(campsites, null, 2), 'utf-8')
+  const supabase = createSupabaseAdminClient()
+  const { data, error } = await supabase.from('campsite_spots').select('payload')
+  if (error) throw error
+  const rows = (data ?? []).map((r: any) => r.payload as Spot)
+  if (rows.length > 0) return rows
+  return defaultCampsites
 }
 
 const defaultCampsites: Spot[] = [
@@ -178,35 +106,25 @@ const defaultCampsites: Spot[] = [
 
 export async function GET() {
   try {
-    try {
-      const data = await fs.readFile(filePath, 'utf-8')
-      const campsites = JSON.parse(data) as Spot[]
-      return NextResponse.json(campsites)
-    } catch {
-      return NextResponse.json(defaultCampsites)
-    }
+    const supabase = createSupabaseAdminClient()
+    const { data, error } = await supabase.from('campsite_spots').select('payload')
+    if (error) throw error
+    const campsites = (data ?? []).map((r: any) => r.payload as Spot)
+    return NextResponse.json(campsites.length ? campsites : defaultCampsites)
   } catch (error) {
     console.error('Błąd podczas odczytu działek:', error)
-    return NextResponse.json(
-      { success: false, message: 'Błąd podczas odczytu działek' },
-      { status: 500 }
-    )
+    // Fallback: zwróć dane domyślne zamiast 500, aby UI działał offline/bez DB
+    return NextResponse.json(defaultCampsites, { status: 200 })
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
     const newSpot = (await request.json()) as Partial<Spot>
-    
-    const campsites = await readCampsites()
-    
-    // Generate new ID bez any
-    const newId =
-      Math.max(...campsites.map((spot) => parseInt(spot.id) || 0), 0) + 1
-    
+    const supabase = createSupabaseAdminClient()
+    const newId = (Date.now()).toString()
     const spotToAdd: Spot = {
-      // wymagane pola; zachowujemy zgodność z istniejącym frontendem
-      id: newId.toString(),
+      id: newSpot.id ?? newId,
       name: newSpot.name ?? '',
       description: newSpot.description ?? '',
       location: newSpot.location ?? { zone: '', spotNumber: '' },
@@ -224,11 +142,8 @@ export async function POST(request: NextRequest) {
       rating: newSpot.rating ?? 0,
       isAvailable: newSpot.isAvailable ?? true,
     }
-    
-    campsites.push(spotToAdd)
-    
-    await writeCampsites(campsites)
-    
+    const { error } = await supabase.from('campsite_spots').upsert({ id: spotToAdd.id, payload: spotToAdd })
+    if (error) throw error
     return NextResponse.json(spotToAdd)
   } catch (error) {
     console.error('Błąd podczas zapisywania działki:', error)
