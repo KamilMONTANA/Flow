@@ -433,35 +433,32 @@ export function DataTable({
   // Tworzenie – w tym UI generujemy pełny snapshot i zapisujemy całą listę POST /api/data
   // (alternatywnie można dodać dedykowany POST pojedynczego rekordu – obecny backend wspiera POST jako overwrite listy)
   const handleCreate = (newBooking: Booking) => {
-    setData((prevData) => {
-      // nadaj unikalne id, jeśli nie ma
-      const id: number = typeof newBooking.id === 'number' ? newBooking.id : Date.now()
-      const bookingWithId: Booking = { ...newBooking, id }
-      const newData = [...prevData, bookingWithId]
+    // nadaj unikalne id, jeśli nie ma
+    const id: number = typeof newBooking.id === 'number' ? newBooking.id : Date.now()
+    const bookingWithId: Booking = { ...newBooking, id }
 
-      fetch('/api/data', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(newData),
-      })
-        .then(async (response) => {
-          if (!response.ok) {
-            const text = await response.text().catch(() => '')
-            throw new Error(`HTTP ${response.status} ${text}`)
-          }
-          if (externalRefreshData) externalRefreshData()
-          toast.success('Utworzono rezerwację')
-        })
-        .catch((error) => {
-          console.error('Błąd podczas zapisywania:', error)
-          toast.error('Błąd podczas zapisywania do pliku')
-        })
-
-      return newData
+    // Wyślij tylko pojedynczy rekord do API i dopiero po sukcesie zaktualizuj stan
+    fetch('/api/data', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(bookingWithId),
     })
-    setIsDrawerOpen(false)
+      .then(async (response) => {
+        if (!response.ok) {
+          const text = await response.text().catch(() => '')
+          throw new Error(`HTTP ${response.status} ${text}`)
+        }
+        setData((prev) => [...prev, bookingWithId])
+        if (externalRefreshData) externalRefreshData()
+        toast.success('Utworzono rezerwację')
+        setIsDrawerOpen(false)
+      })
+      .catch((error) => {
+        console.error('Błąd podczas zapisywania:', error)
+        toast.error('Błąd podczas zapisywania rezerwacji')
+      })
   }
 
   // Usuwanie wyłącznie po jednoznacznym "id" rekordu,
