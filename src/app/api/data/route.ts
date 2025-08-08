@@ -1,6 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import type { Booking } from '@/types/booking'
-import { createSupabaseAdminClient } from '@/lib/supabase/server'
+import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { z } from 'zod'
+
+// Zod schema for payload validation
+const ReservationSchema = z.object({
+  payload: z.object({
+    routeId: z.string(),
+    userId: z.string(),
+  }),
+})
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -18,7 +27,7 @@ export const revalidate = 0
 
 export async function GET() {
   try {
-    const supabase = createSupabaseAdminClient()
+    const supabase = createServerSupabaseClient()
     const { data, error } = await supabase
       .from('reservations')
       .select('payload')
@@ -38,7 +47,7 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createSupabaseAdminClient()
+    const supabase = createServerSupabaseClient()
     const body = await request.json()
 
     // Zgodność z istniejącym kontraktem: POST przyjmuje pełną listę rezerwacji (overwrite)
@@ -54,6 +63,17 @@ export async function POST(request: NextRequest) {
     }
 
     // Alternatywnie: pojedynczy rekord
+    if (!Array.isArray(body)) {
+      try {
+        ReservationSchema.parse(body)
+      } catch (err) {
+        return NextResponse.json(
+          { success: false, message: 'Validation failed', details: (err as z.ZodError).issues },
+          { status: 400 }
+        )
+      }
+    }
+
     const incoming = body as Partial<Booking>
     const id = typeof incoming.id === 'number' ? incoming.id : Date.now()
     const nowIso = new Date().toISOString()
@@ -86,7 +106,7 @@ export async function PUT(request: NextRequest) {
       )
     }
     const numericId = typeof id === 'number' ? id : Number(id)
-    const supabase = createSupabaseAdminClient()
+    const supabase = createServerSupabaseClient()
     const { data: row, error: selError } = await supabase
       .from('reservations')
       .select('payload')
@@ -129,7 +149,7 @@ export async function DELETE(request: NextRequest) {
       )
     }
     const id = Number(idParam)
-    const supabase = createSupabaseAdminClient()
+    const supabase = createServerSupabaseClient()
     const { error } = await supabase.from('reservations').delete().eq('id', id)
     if (error) throw error
     return NextResponse.json({ success: true, message: 'Usunięto rekord' })
