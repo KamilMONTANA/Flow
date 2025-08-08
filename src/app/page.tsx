@@ -106,7 +106,8 @@ const Home: React.FC = () => {
           <div className="container mx-auto px-4 md:px-6">
             <div className="mx-auto max-w-2xl text-center">
               <h2 id="features-heading" className="text-3xl md:text-4xl font-bold tracking-tight text-gray-900">Funkcje, które przyspieszają Twój biznes</h2>
-              <p className="mt-3 text-gray-700">Od rezerwacji po raporty. Flow porządkuje codzienność w sezonie i poza nim.</p>
+              <div className="mx-auto mt-3 h-1 w-16 rounded bg-blue-700" aria-hidden="true" />
+              <p className="mt-4 text-gray-700">Od rezerwacji po raporty. Flow porządkuje codzienność w sezonie i poza nim.</p>
             </div>
             <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               <Card>
@@ -168,30 +169,31 @@ const Home: React.FC = () => {
         </section>
 
         {/* How it works */}
-        <section id="how" aria-labelledby="how-heading" className="py-20 md:py-28">
+        <section id="how" aria-labelledby="how-heading" className="py-20 md:py-28 bg-slate-900 text-white">
           <div className="container mx-auto px-4 md:px-6">
             <div className="mx-auto max-w-2xl text-center">
-              <h2 id="how-heading" className="text-3xl md:text-4xl font-bold tracking-tight text-gray-900">Jak to działa</h2>
-              <p className="mt-3 text-gray-700">Start w mniej niż 24h. Bez skomplikowanych wdrożeń.</p>
+              <h2 id="how-heading" className="text-3xl md:text-4xl font-bold tracking-tight text-white">Jak to działa</h2>
+              <div className="mx-auto mt-3 h-1 w-16 rounded bg-blue-400" aria-hidden="true" />
+              <p className="mt-4 text-white/90">Start w mniej niż 24h. Bez skomplikowanych wdrożeń.</p>
             </div>
             <div className="mt-12 grid gap-6 md:grid-cols-3">
-              <Card>
+              <Card className="bg-slate-800/60 border-slate-700">
                 <CardHeader>
-                  <div className="text-blue-800 font-semibold">1. Szybka konfiguracja</div>
+                  <div className="text-blue-300 font-semibold">1. Szybka konfiguracja</div>
                 </CardHeader>
-                <CardContent className="text-sm text-gray-800 leading-6">Dodaj sprzęt, trasy, cennik i grafiki. Zaimportujemy Twoje dane.</CardContent>
+                <CardContent className="text-sm text-slate-100/90 leading-6">Dodaj sprzęt, trasy, cennik i grafiki. Zaimportujemy Twoje dane.</CardContent>
               </Card>
-              <Card>
+              <Card className="bg-slate-800/60 border-slate-700">
                 <CardHeader>
-                  <div className="text-blue-800 font-semibold">2. Uruchom rezerwacje</div>
+                  <div className="text-blue-300 font-semibold">2. Uruchom rezerwacje</div>
                 </CardHeader>
-                <CardContent className="text-sm text-gray-800 leading-6">Otrzymujesz link do formularza rezerwacji i panel obsługi.</CardContent>
+                <CardContent className="text-sm text-slate-100/90 leading-6">Otrzymujesz link do formularza rezerwacji i panel obsługi.</CardContent>
               </Card>
-              <Card>
+              <Card className="bg-slate-800/60 border-slate-700">
                 <CardHeader>
-                  <div className="text-blue-800 font-semibold">3. Zarządzaj i rośnij</div>
+                  <div className="text-blue-300 font-semibold">3. Zarządzaj i rośnij</div>
                 </CardHeader>
-                <CardContent className="text-sm text-gray-800 leading-6">Harmonogram, powiadomienia, płatności i raporty – wszystko w jednym miejscu.</CardContent>
+                <CardContent className="text-sm text-slate-100/90 leading-6">Harmonogram, powiadomienia, płatności i raporty – wszystko w jednym miejscu.</CardContent>
               </Card>
             </div>
           </div>
@@ -202,7 +204,8 @@ const Home: React.FC = () => {
           <div className="container mx-auto px-4 md:px-6">
             <div className="mx-auto max-w-2xl text-center">
               <h2 id="pricing-heading" className="text-3xl md:text-4xl font-bold tracking-tight text-gray-900">Prosty i przejrzysty cennik</h2>
-              <p className="mt-3 text-gray-700">Dopasowany do wielkości wypożyczalni. Bez ukrytych kosztów.</p>
+              <div className="mx-auto mt-3 h-1 w-16 rounded bg-blue-700" aria-hidden="true" />
+              <p className="mt-4 text-gray-700">Dopasowany do wielkości wypożyczalni. Bez ukrytych kosztów.</p>
             </div>
             <div className="mt-12 grid gap-6 md:grid-cols-3">
               <Card className="border-blue-100">
@@ -256,23 +259,27 @@ const Home: React.FC = () => {
         </section>
 
         {/* Testimonials */}
-        <section aria-labelledby="testimonials-heading" className="py-20 md:py-28">
+        <section aria-labelledby="testimonials-heading" className="py-20 md:py-28 bg-gradient-to-b from-slate-900 to-slate-800">
           <div className="container mx-auto px-4 md:px-6">
-            <h2 id="testimonials-heading" className="sr-only">Opinie klientów</h2>
-            <div className="grid gap-6 md:grid-cols-3">
-              <Card>
+            <div className="mx-auto max-w-2xl text-center">
+              <h2 id="testimonials-heading" className="text-3xl md:text-4xl font-bold tracking-tight text-white">Opinie klientów</h2>
+              <div className="mx-auto mt-3 h-1 w-16 rounded bg-blue-400" aria-hidden="true" />
+              <p className="mt-4 text-white/90">Sprawdzone w sezonie, docenione przez zespoły operacyjne.</p>
+            </div>
+            <div className="mt-12 grid gap-6 md:grid-cols-3">
+              <Card className="bg-white/95">
                 <CardContent className="pt-6 text-sm text-gray-900 leading-7">
                   „W sezonie telefon nie przestawał dzwonić. Z Flow 80% rezerwacji wpada online. Mamy porządek i czas na klientów.”
                   <div className="mt-4 text-xs text-gray-600">Właściciel wypożyczalni – Mazury</div>
                 </CardContent>
               </Card>
-              <Card>
+              <Card className="bg-white/95">
                 <CardContent className="pt-6 text-sm text-gray-900 leading-7">
                   „Grafik tras z automatycznymi przypomnieniami kierowców to game changer. Koniec z pomyłkami.”
                   <div className="mt-4 text-xs text-gray-600">Koordynator logistyki – Pomorze</div>
                 </CardContent>
               </Card>
-              <Card>
+              <Card className="bg-white/95">
                 <CardContent className="pt-6 text-sm text-gray-900 leading-7">
                   „Raporty sugerują, które trasy promować. Sprzedaż wzrosła o 23% r/r.”
                   <div className="mt-4 text-xs text-gray-600">Manager – Podlasie</div>
@@ -287,7 +294,8 @@ const Home: React.FC = () => {
           <div className="container mx-auto px-4 md:px-6">
             <div className="mx-auto max-w-2xl text-center">
               <h2 id="faq-heading" className="text-3xl md:text-4xl font-bold tracking-tight text-gray-900">Najczęstsze pytania</h2>
-              <p className="mt-3 text-gray-700">Krótko i rzeczowo – jeśli potrzebujesz więcej, napisz do nas.</p>
+              <div className="mx-auto mt-3 h-1 w-16 rounded bg-blue-700" aria-hidden="true" />
+              <p className="mt-4 text-gray-700">Krótko i rzeczowo – jeśli potrzebujesz więcej, napisz do nas.</p>
             </div>
             <div className="mx-auto mt-10 max-w-3xl space-y-4">
               <details className="group rounded-lg border bg-white p-5 open:shadow-sm">

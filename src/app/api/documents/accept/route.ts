@@ -1,26 +1,37 @@
 import { NextRequest, NextResponse } from "next/server"
 import { computeAgreementHash, getAgreementCanonical } from "@/lib/agreements"
+import { createSupabaseAdminClient } from "@/lib/supabase/server"
 
 type AgreementType = "campsite" | "kayak"
 
-// PAMIĘĆ TYMCZASOWA: w przyszłości zastąp DB (Mongo/Mongoose)
-const inMemoryAcceptances: Array<{
-  acceptanceId: string
-  userId: string
-  type: AgreementType
-  version: string
-  acceptedAt: string
-  userAgent?: string
-  ip?: string
-  documentHash?: string
-  firstName?: string
-  lastName?: string
-  email?: string
-  phone?: string
-}> = []
+export const dynamic = "force-dynamic"
+export const runtime = "nodejs"
+export const revalidate = 0
 
 export async function GET() {
-  return NextResponse.json(inMemoryAcceptances)
+  try {
+    const supabase = createSupabaseAdminClient()
+    const { data, error } = await supabase
+      .from("document_acceptances")
+      .select("acceptance_id, user_id, first_name, last_name, phone, email, type, version, accepted_at")
+      .order("accepted_at", { ascending: false })
+
+    if (error) throw error
+    const mapped = (data ?? []).map((r: any) => ({
+      acceptanceId: r.acceptance_id,
+      userId: r.user_id,
+      firstName: r.first_name,
+      lastName: r.last_name,
+      phone: r.phone,
+      email: r.email,
+      type: r.type,
+      version: r.version,
+      acceptedAt: r.accepted_at,
+    }))
+    return NextResponse.json(mapped)
+  } catch (e) {
+    return NextResponse.json([], { status: 200 })
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -51,25 +62,27 @@ export async function POST(request: NextRequest) {
     const ip = request.headers.get("x-forwarded-for") ?? undefined
 
     const acceptanceId = `${userId}-${type}-${acceptedAt}`
-    inMemoryAcceptances.push({
-      acceptanceId,
-      userId,
+
+    const supabase = createSupabaseAdminClient()
+    const { error } = await supabase.from("document_acceptances").upsert({
+      acceptance_id: acceptanceId,
+      user_id: userId,
       type,
       version,
-      acceptedAt,
-      userAgent,
+      accepted_at: new Date(acceptedAt).toISOString(),
+      user_agent: userAgent,
       ip,
-      documentHash,
-      firstName,
-      lastName,
+      document_hash: documentHash,
+      first_name: firstName,
+      last_name: lastName,
       email,
       phone,
     })
+    if (error) throw error
 
     return NextResponse.json({ ok: true, documentHash, acceptanceId })
-  } catch {
+  } catch (e) {
     return NextResponse.json({ error: "Błąd serwera" }, { status: 500 })
   }
 }
-
 
