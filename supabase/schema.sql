@@ -1,132 +1,166 @@
--- Supabase schema for reservation-system
+-- Supabase schema for kayak and campsite reservation system
 
--- Reservations for /api/data
-create table if not exists public.reservations (
-  id bigint primary key,
-  payload jsonb not null,
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
-);
-create index if not exists reservations_payload_gin on public.reservations using gin (payload);
--- Szybki filtr po polu JSON "Trasa" wykorzystywany w API
-create index if not exists reservations_trasa_idx on public.reservations ((payload->>'Trasa'));
+-- Create extensions
+CREATE EXTENSION IF NOT EXISTS "pgcrypto" WITH SCHEMA extensions;
 
--- Inventory: cars, categories, equipment
-create table if not exists public.cars (
-  id text primary key,
-  payload jsonb not null
+-- Reservations table
+CREATE TABLE public.reservations (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    payload JSONB NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
-create index if not exists cars_payload_gin on public.cars using gin (payload);
 
-create table if not exists public.categories (
-  id text primary key,
-  payload jsonb not null
-);
-create index if not exists categories_payload_gin on public.categories using gin (payload);
+-- Create trigger for updated_at
+CREATE OR REPLACE FUNCTION update_modified_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
 
-create table if not exists public.equipment (
-  id text primary key,
-  payload jsonb not null
-);
-create index if not exists equipment_payload_gin on public.equipment using gin (payload);
+CREATE TRIGGER update_reservations_modtime
+BEFORE UPDATE ON public.reservations
+FOR EACH ROW
+EXECUTE FUNCTION update_modified_column();
 
--- Campsites
-create table if not exists public.campsite_spots (
-  id text primary key,
-  payload jsonb not null
+-- Routes table
+CREATE TABLE public.routes (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    payload JSONB NOT NULL
 );
-create index if not exists campsite_spots_payload_gin on public.campsite_spots using gin (payload);
 
-create table if not exists public.campsite_bookings (
-  id text primary key,
-  payload jsonb not null
+-- Campsite spots table
+CREATE TABLE public.campsite_spots (
+    id TEXT PRIMARY KEY,
+    payload JSONB NOT NULL
 );
-create index if not exists campsite_bookings_payload_gin on public.campsite_bookings using gin (payload);
+
+-- Campsite bookings table
+CREATE TABLE public.campsite_bookings (
+    id TEXT PRIMARY KEY,
+    payload JSONB NOT NULL
+);
+
+-- Inventory tables (cars, categories, equipment)
+CREATE TABLE public.inventory_cars (
+    id TEXT PRIMARY KEY,
+    payload JSONB NOT NULL
+);
+
+CREATE TABLE public.inventory_categories (
+    id TEXT PRIMARY KEY,
+    payload JSONB NOT NULL
+);
+
+CREATE TABLE public.inventory_equipment (
+    id TEXT PRIMARY KEY,
+    payload JSONB NOT NULL
+);
 
 -- Dashboard data (singleton)
-create table if not exists public.dashboard_data (
-  id text primary key,
-  payload jsonb not null
+CREATE TABLE public.dashboard_data (
+    id TEXT PRIMARY KEY,
+    payload JSONB NOT NULL
 );
 
--- Kayak routes (used by DataTable filters and booking.Trasa)
-create table if not exists public.routes (
-  id bigint primary key,
-  payload jsonb not null
+-- Document acceptances table
+CREATE TABLE public.document_acceptances (
+    acceptance_id TEXT GENERATED ALWAYS AS (payload->>'acceptance_id') STORED PRIMARY KEY,
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+    type TEXT GENERATED ALWAYS AS (payload->>'type') STORED,
+    version TEXT GENERATED ALWAYS AS (payload->>'version') STORED,
+    accepted_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    payload JSONB NOT NULL
 );
-create index if not exists routes_payload_gin on public.routes using gin (payload);
 
+-- Create GIN indexes for JSONB columns
+CREATE INDEX idx_reservations_payload_gin ON public.reservations USING GIN(payload);
+CREATE INDEX idx_routes_payload_gin ON public.routes USING GIN(payload);
+CREATE INDEX idx_routes_route_index ON public.routes ((payload->>'Trasa'));
 
--- Document acceptances (umowy/regulaminy)
-create table if not exists public.document_acceptances (
-  acceptance_id text primary key,
-  user_id text,
-  type text not null check (type in ('campsite','kayak')),
-  version text not null,
-  accepted_at timestamptz not null,
-  user_agent text,
-  ip text,
-  document_hash text,
-  first_name text,
-  last_name text,
-  email text,
-  phone text
-);
-create index if not exists document_acceptances_user on public.document_acceptances (user_id);
-create index if not exists document_acceptances_type on public.document_acceptances (type);
-create index if not exists document_acceptances_version on public.document_acceptances (version);
-create index if not exists document_acceptances_email on public.document_acceptances (email);
-create index if not exists document_acceptances_phone on public.document_acceptances (phone);
+CREATE INDEX idx_campsite_spots_payload_gin ON public.campsite_spots USING GIN(payload);
+CREATE INDEX idx_campsite_bookings_payload_gin ON public.campsite_bookings USING GIN(payload);
+CREATE INDEX idx_inventory_cars_payload_gin ON public.inventory_cars USING GIN(payload);
+CREATE INDEX idx_inventory_categories_payload_gin ON public.inventory_categories USING GIN(payload);
+CREATE INDEX idx_inventory_equipment_payload_gin ON public.inventory_equipment USING GIN(payload);
+CREATE INDEX idx_dashboard_data_payload_gin ON public.dashboard_data USING GIN(payload);
+CREATE INDEX idx_document_acceptances_payload_gin ON public.document_acceptances USING GIN(payload);
 
--- =====================================
--- RLS, triggery i funkcje pomocnicze
--- =====================================
+-- Enable Row Level Security
+ALTER TABLE public.reservations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.routes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.campsite_spots ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.campsite_bookings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.inventory_cars ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.inventory_categories ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.inventory_equipment ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.dashboard_data ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.document_acceptances ENABLE ROW LEVEL SECURITY;
 
--- Funkcja do automatycznej aktualizacji kolumny updated_at
-create or replace function public.set_updated_at()
-returns trigger
-language plpgsql
-as $$
-begin
-  new.updated_at = now();
-  return new;
-end;
-$$;
+-- RLS Policies
+-- Routes: Public SELECT, Service Role full access
+CREATE POLICY "Routes can be read publicly" ON public.routes
+FOR SELECT TO anon, authenticated
+USING (true);
 
--- Włącz Row Level Security na wszystkich tabelach
-alter table if exists public.reservations enable row level security;
-alter table if exists public.cars enable row level security;
-alter table if exists public.categories enable row level security;
-alter table if exists public.equipment enable row level security;
-alter table if exists public.campsite_spots enable row level security;
-alter table if exists public.campsite_bookings enable row level security;
-alter table if exists public.dashboard_data enable row level security;
-alter table if exists public.routes enable row level security;
-alter table if exists public.document_acceptances enable row level security;
+CREATE POLICY "Full access for service role" ON public.routes
+FOR ALL TO service_role
+USING (true)
+WITH CHECK (true);
 
--- Domyślnie: brak polityk (wszystko zabronione). Serwis używa service_role, który omija RLS.
--- Opcjonalnie: odkomentuj poniższe polityki, jeśli chcesz publiczny odczyt wybranych tabel.
+-- Reservations: Strict service role access
+CREATE POLICY "Full access for service role" ON public.reservations
+FOR ALL TO service_role
+USING (true)
+WITH CHECK (true);
 
--- Przykład: publiczny odczyt listy tras i miejsc kempingowych
--- create policy if not exists "public select routes" on public.routes
---   for select to anon using (true);
--- create policy if not exists "public select campsite_spots" on public.campsite_spots
---   for select to anon using (true);
+-- Campsite Spots: Public SELECT, Service Role full access
+CREATE POLICY "Campsite spots can be read publicly" ON public.campsite_spots
+FOR SELECT TO anon, authenticated
+USING (true);
 
--- Akceptacje dokumentów: zezwól na insert z klienta (anon lub authenticated), select tylko dla roli authenticated
-drop policy if exists "insert acceptances" on public.document_acceptances;
-create policy "insert acceptances" on public.document_acceptances
-  for insert to anon, authenticated
-  with check (true);
+CREATE POLICY "Full access for service role" ON public.campsite_spots
+FOR ALL TO service_role
+USING (true)
+WITH CHECK (true);
 
-drop policy if exists "select acceptances for authenticated" on public.document_acceptances;
-create policy "select acceptances for authenticated" on public.document_acceptances
-  for select to authenticated
-  using (true);
+-- Campsite Bookings: Strict service role access
+CREATE POLICY "Full access for service role" ON public.campsite_bookings
+FOR ALL TO service_role
+USING (true)
+WITH CHECK (true);
 
--- Triggery updated_at
-drop trigger if exists trg_reservations_updated_at on public.reservations;
-create trigger trg_reservations_updated_at
-  before update on public.reservations
-  for each row execute function public.set_updated_at();
+-- Inventory tables: Strict service role access
+CREATE POLICY "Full access for service role" ON public.inventory_cars
+FOR ALL TO service_role
+USING (true)
+WITH CHECK (true);
+
+CREATE POLICY "Full access for service role" ON public.inventory_categories
+FOR ALL TO service_role
+USING (true)
+WITH CHECK (true);
+
+CREATE POLICY "Full access for service role" ON public.inventory_equipment
+FOR ALL TO service_role
+USING (true)
+WITH CHECK (true);
+
+-- Dashboard Data: Strict service role access
+CREATE POLICY "Full access for service role" ON public.dashboard_data
+FOR ALL TO service_role
+USING (true)
+WITH CHECK (true);
+
+-- Document Acceptances:
+-- Insert for anon/authenticated, SELECT only for authenticated
+CREATE POLICY "Users can insert document acceptances" ON public.document_acceptances
+FOR INSERT TO anon, authenticated
+WITH CHECK (user_id = auth.uid());
+
+CREATE POLICY "Users can view own document acceptances" ON public.document_acceptances
+FOR SELECT TO authenticated
+USING (user_id = auth.uid());
 
