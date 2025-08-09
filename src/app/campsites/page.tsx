@@ -15,67 +15,23 @@ import { Plus, Edit, Trash2, Search, Eye, Calendar, Users, MapPin, Star, Zap, Dr
 import { useRouter } from 'next/navigation'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { CampsiteBookings } from '@/components/campsite-bookings'
-
-interface Spot {
-  id: string
-  name: string
-  description: string
-  location: {
-    zone: string
-    spotNumber: string
-  }
-  capacity: number
-  pricePerNight: number
-  amenities: {
-    electricity: boolean
-    water: boolean
-    wifi: boolean
-    firePit: boolean
-    picnicTable: boolean
-    shower: boolean
-    toilet: boolean
-  }
-  rating: number
-  isAvailable: boolean
-}
-
-interface Booking {
-  id: string
-  spotId: string
-  customerName: string
-  customerEmail: string
-  customerPhone: string
-  checkIn: string
-  checkOut: string
-  numberOfPeople: number
-  totalPrice: number
-  status: 'confirmed' | 'pending' | 'cancelled' | 'completed'
-  createdAt: string
-  updatedAt: string
-  // Dodatki w cenie
-  addons?: {
-    firePit?: boolean
-    electricity?: boolean
-    meals?: boolean
-    groupTransport?: boolean
-  }
-}
+import { CampsiteSpot, CampsiteBooking } from '@/types/campsite'
 
 export default function CampsitesPage() {
-  const [spots, setSpots] = useState<Spot[]>([])
-  const [bookings, setBookings] = useState<Booking[]>([])
+  const [spots, setSpots] = useState<CampsiteSpot[]>([])
+  const [bookings, setBookings] = useState<CampsiteBooking[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedZone, setSelectedZone] = useState<string>('all')
-  const [selectedSpot, setSelectedSpot] = useState<Spot | null>(null)
+  const [selectedSpot, setSelectedSpot] = useState<CampsiteSpot | null>(null)
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
-  const [editingSpot, setEditingSpot] = useState<Spot | null>(null)
-  const [deletingSpot, setDeletingSpot] = useState<Spot | null>(null)
+  const [editingSpot, setEditingSpot] = useState<CampsiteSpot | null>(null)
+  const [deletingSpot, setDeletingSpot] = useState<CampsiteSpot | null>(null)
   const [isSaving, setIsSaving] = useState(false)
 
-  const [formData, setFormData] = useState<Partial<Spot>>({
+  const [formData, setFormData] = useState<Partial<CampsiteSpot>>({
     name: '',
     description: '',
     location: { zone: '', spotNumber: '' },
@@ -216,13 +172,13 @@ export default function CampsitesPage() {
     })
   }
 
-  const openEditDialog = (spot: Spot) => {
+  const openEditDialog = (spot: CampsiteSpot) => {
     setEditingSpot(spot)
     setFormData(spot)
     setIsEditDialogOpen(true)
   }
 
-  const openDeleteDialog = (spot: Spot) => {
+  const openDeleteDialog = (spot: CampsiteSpot) => {
     setDeletingSpot(spot)
     setIsDeleteDialogOpen(true)
   }
@@ -667,8 +623,8 @@ export default function CampsitesPage() {
 }
 
 function SpotDetailView({ spot, bookings, onBack, onRefresh }: {
-  spot: Spot
-  bookings: Booking[]
+  spot: CampsiteSpot
+  bookings: CampsiteBooking[]
   onBack: () => void
   onRefresh: () => void
 }) {
@@ -677,11 +633,11 @@ function SpotDetailView({ spot, bookings, onBack, onRefresh }: {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [isEditReservationOpen, setIsEditReservationOpen] = useState(false)
   const [isDeleteReservationOpen, setIsDeleteReservationOpen] = useState(false)
-  const [editingReservation, setEditingReservation] = useState<Booking | null>(null)
-  const [deletingReservation, setDeletingReservation] = useState<Booking | null>(null)
+  const [editingReservation, setEditingReservation] = useState<CampsiteBooking | null>(null)
+  const [deletingReservation, setDeletingReservation] = useState<CampsiteBooking | null>(null)
   const [isSaving, setIsSaving] = useState(false)
-  const [editFormData, setEditFormData] = useState<Partial<Spot>>(spot)
-  const [reservationFormData, setReservationFormData] = useState<Partial<Booking>>({})
+  const [editFormData, setEditFormData] = useState<Partial<CampsiteSpot>>(spot)
+  const [reservationFormData, setReservationFormData] = useState<Partial<CampsiteBooking>>({})
   
   // Stan dla filtrów każdej zakładki
   const [activeFilters, setActiveFilters] = useState({ name: '', email: '', phone: '', dateFrom: '', dateTo: '' })
@@ -800,19 +756,19 @@ function SpotDetailView({ spot, bookings, onBack, onRefresh }: {
   }
 
 
-  const openEditReservation = (booking: Booking) => {
+  const openEditReservation = (booking: CampsiteBooking) => {
     setEditingReservation(booking)
     setReservationFormData(booking)
     setIsEditReservationOpen(true)
   }
 
-  const openDeleteReservation = (booking: Booking) => {
+  const openDeleteReservation = (booking: CampsiteBooking) => {
     setDeletingReservation(booking)
     setIsDeleteReservationOpen(true)
   }
   
   // Funkcje pomocnicze do filtrowania
-  const filterBookings = (bookings: Booking[], filters: BookingFilters, isUpcoming: boolean = false, isArchive: boolean = false) => {
+  const filterBookings = (bookings: CampsiteBooking[], filters: BookingFilters, isUpcoming: boolean = false, isArchive: boolean = false) => {
     return bookings.filter(booking => {
       // Podstawowe filtrowanie po nazwisku, emailu i telefonie
       const nameMatch = !filters.name || booking.customerName.toLowerCase().includes(filters.name.toLowerCase())
