@@ -96,21 +96,17 @@ function TableCellViewer({ item, onUpdate }: {
   const handleSave = async () => {
     setIsSaving(true)
     try {
-      onUpdate(editedData)
-      
-      const closeButton = document.querySelector('[data-drawer-close]')
-      if (closeButton) {
-        (closeButton as HTMLElement).click()
-      }
-      
+      await onUpdate(editedData)
       toast.success('Zapisano zmiany')
     } catch {
       toast.error('Błąd podczas zapisywania')
     } finally {
       setIsSaving(false)
-      // Resetuj edytowane dane po zapisaniu
-      setEditedData(editedData)
     }
+  }
+
+  const handleCancel = () => {
+    setEditedData(item)
   }
 
   const handleInputChange = (field: keyof Booking, value: string) => {
@@ -350,11 +346,15 @@ function TableCellViewer({ item, onUpdate }: {
           </form>
         </div>
         <DrawerFooter>
-          <Button onClick={handleSave} disabled={isSaving}>
-            {isSaving ? 'Zapisywanie...' : 'Zapisz'}
-          </Button>
           <DrawerClose asChild>
-            <Button variant="outline" data-drawer-close>Zamknij</Button>
+            <Button onClick={handleSave} disabled={isSaving}>
+              {isSaving ? 'Zapisywanie...' : 'Zapisz'}
+            </Button>
+          </DrawerClose>
+          <DrawerClose asChild>
+            <Button variant="outline" onClick={handleCancel}>
+              Anuluj
+            </Button>
           </DrawerClose>
         </DrawerFooter>
       </DrawerContent>
@@ -400,34 +400,35 @@ export function DataTable({
   }, [routes]);
 
   // Aktualizacja pojedynczego rekordu po id -> PUT /api/data
-  const handleUpdate = (updatedItem: Booking) => {
+  const handleUpdate = async (updatedItem: Booking) => {
     setData((prevData) => {
       const newData = prevData.map((item) =>
         item.id === updatedItem.id ? updatedItem : item
       )
+      return newData
+    })
 
-      fetch('/api/data', {
+    try {
+      const response = await fetch('/api/data', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(updatedItem),
       })
-        .then(async (response) => {
-          if (!response.ok) {
-            const text = await response.text().catch(() => '')
-            throw new Error(`HTTP ${response.status} ${text}`)
-          }
-          if (externalRefreshData) externalRefreshData()
-          toast.success('Zaktualizowano rezerwację')
-        })
-        .catch((error) => {
-          console.error('Błąd podczas aktualizacji:', error)
-          toast.error('Błąd podczas aktualizacji')
-        })
 
-      return newData
-    })
+      if (!response.ok) {
+        const text = await response.text().catch(() => '')
+        throw new Error(`HTTP ${response.status} ${text}`)
+      }
+
+      if (externalRefreshData) externalRefreshData()
+      toast.success('Zaktualizowano rezerwację')
+    } catch (error) {
+      console.error('Błąd podczas aktualizacji:', error)
+      toast.error('Błąd podczas aktualizacji')
+      throw error
+    }
   }
 
   // Tworzenie – w tym UI generujemy pełny snapshot i zapisujemy całą listę POST /api/data
