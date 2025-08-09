@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Plus, Edit, Trash2, Search, Eye, Calendar, Users, MapPin, Star, Zap, Droplet, Wifi } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+import { CampsiteBookings } from '@/components/campsite-bookings'
 
 interface Spot {
   id: string
@@ -260,7 +261,13 @@ export default function CampsitesPage() {
 
   return (
     <div className="container mx-auto py-8 px-4">
-      <div className="flex justify-between items-center mb-6">
+      <Tabs defaultValue="spots">
+        <TabsList className="mb-6">
+          <TabsTrigger value="spots">Pola</TabsTrigger>
+          <TabsTrigger value="bookings">Rezerwacje</TabsTrigger>
+        </TabsList>
+        <TabsContent value="spots">
+          <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Pola namiotowe</h1>
         <Button onClick={() => setIsCreateDialogOpen(true)}>
           <Plus className="w-4 h-4 mr-2" />
@@ -616,7 +623,7 @@ export default function CampsitesPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
             <h3 className="text-lg font-semibold mb-4 text-red-600">Potwierdź usunięcie</h3>
-            
+
             <div className="space-y-4">
               <p className="text-gray-700">
                 Czy na pewno chcesz usunąć pole <strong>{deletingSpot?.name}</strong>?
@@ -647,6 +654,14 @@ export default function CampsitesPage() {
           </div>
         </div>
       )}
+        </TabsContent>
+        <TabsContent value="bookings">
+          <div className="flex justify-between items-center mb-6">
+            <h1 className="text-3xl font-bold">Rezerwacje</h1>
+          </div>
+          <CampsiteBookings bookings={bookings} spots={spots} onUpdate={loadData} />
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }
