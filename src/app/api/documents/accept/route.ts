@@ -17,7 +17,18 @@ export async function GET() {
       .order("accepted_at", { ascending: false })
 
     if (error) throw error
-    const mapped = (data ?? []).map((r: any) => ({
+    type AcceptanceRow = {
+      acceptance_id: string
+      user_id: string
+      first_name: string
+      last_name: string
+      phone: string | null
+      email: string | null
+      type: AgreementType
+      version: string
+      accepted_at: string
+    }
+    const mapped = (data ?? []).map((r: AcceptanceRow) => ({
       acceptanceId: r.acceptance_id,
       userId: r.user_id,
       firstName: r.first_name,
@@ -29,7 +40,8 @@ export async function GET() {
       acceptedAt: r.accepted_at,
     }))
     return NextResponse.json(mapped)
-  } catch (e) {
+  } catch (error) {
+    console.error('Błąd podczas odczytu akceptacji dokumentów', error)
     return NextResponse.json([], { status: 200 })
   }
 }
@@ -81,7 +93,8 @@ export async function POST(request: NextRequest) {
     if (error) throw error
 
     return NextResponse.json({ ok: true, documentHash, acceptanceId })
-  } catch (e) {
+  } catch (error) {
+    console.error('Błąd podczas zapisu akceptacji dokumentu', error)
     return NextResponse.json({ error: "Błąd serwera" }, { status: 500 })
   }
 }

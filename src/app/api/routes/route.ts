@@ -6,9 +6,11 @@ export async function GET() {
     const supabase = createSupabaseAdminClient()
     const { data, error } = await supabase.from('routes').select('payload')
     if (error) throw error
-    const routes = (data ?? []).map((r: any) => r.payload)
+    type RouteData = Record<string, unknown>
+    const routes = (data ?? []).map((r: { payload: RouteData }) => r.payload as RouteData)
     return NextResponse.json(routes)
   } catch (e) {
+    console.error('Błąd podczas odczytu tras', e)
     // Fallback: pusta lista zamiast 500, aby UI działał bez DB
     return NextResponse.json([], { status: 200 })
   }
@@ -31,6 +33,7 @@ export async function POST(request: NextRequest) {
     if (error) throw error
     return NextResponse.json(payload)
   } catch (e) {
+    console.error('Błąd podczas zapisu trasy', e)
     return NextResponse.json({ success: false, message: 'Błąd podczas zapisu trasy' }, { status: 500 })
   }
 }
@@ -46,6 +49,7 @@ export async function DELETE(request: NextRequest) {
     if (error) throw error
     return NextResponse.json({ success: true })
   } catch (e) {
+    console.error('Błąd podczas usuwania trasy', e)
     return NextResponse.json({ success: false, message: 'Błąd podczas usuwania trasy' }, { status: 500 })
   }
 }
