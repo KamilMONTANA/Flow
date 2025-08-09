@@ -130,14 +130,14 @@ function TableCellViewer({ item, onUpdate }: {
           {item.Imie} {item.Nazwisko}
         </Button>
       </DrawerTrigger>
-      <DrawerContent>
+      <DrawerContent className="flex h-full flex-col">
         <DrawerHeader className="gap-1">
           <DrawerTitle>{item.Imie} {item.Nazwisko}</DrawerTitle>
           <DrawerDescription>
             Szczegóły rezerwacji dla {item.Imie} {item.Nazwisko}
           </DrawerDescription>
         </DrawerHeader>
-        <div className="flex flex-col gap-4 overflow-y-auto px-4 text-sm">
+        <div className="flex-1 overflow-y-auto px-4 text-sm min-h-0">
           <form className="flex flex-col gap-4" onSubmit={(e) => e.preventDefault()}>
             <div className="flex flex-col gap-3">
               <Label htmlFor="imie-nazwisko">Imię i Nazwisko</Label>
@@ -808,7 +808,7 @@ export function DataTable({
                 ✕
               </Button>
             </div>
-            <div className="flex-1 overflow-y-auto p-6">
+            <div className="flex-1 overflow-y-auto p-6 min-h-0">
               <BookingForm
                 booking={editingBooking}
                 onSave={editingBooking ? handleUpdate : handleCreate}
