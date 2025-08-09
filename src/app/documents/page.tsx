@@ -71,11 +71,36 @@ export default function DocumentsPage() {
   const refreshRows = React.useCallback(async () => {
     try {
       const res = await fetch("/api/documents/accept", { cache: "no-store" })
-      const data = await res.json()
-      const grouped = new Map<string, any>()
-      ;(data as any[]).forEach((item) => {
+      type AcceptanceItem = {
+        acceptanceId: string
+        userId: string
+        firstName?: string
+        lastName?: string
+        phone?: string
+        email?: string
+        type: AgreementType
+        version: string
+        acceptedAt: string
+      }
+      const data = (await res.json()) as AcceptanceItem[]
+      type Grouped = {
+        firstName?: string
+        lastName?: string
+        phone?: string
+        kayakAccepted: boolean
+        campsiteAccepted: boolean
+      }
+      const grouped = new Map<string, Grouped>()
+      data.forEach((item) => {
         const key = item.phone || item.email || item.userId
-        const prev = grouped.get(key) || { firstName: item.firstName, lastName: item.lastName, phone: item.phone, kayakAccepted: false, campsiteAccepted: false }
+        const prev =
+          grouped.get(key) || {
+            firstName: item.firstName,
+            lastName: item.lastName,
+            phone: item.phone,
+            kayakAccepted: false,
+            campsiteAccepted: false,
+          }
         if (item.type === "kayak") prev.kayakAccepted = true
         if (item.type === "campsite") prev.campsiteAccepted = true
         grouped.set(key, prev)

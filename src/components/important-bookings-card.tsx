@@ -16,14 +16,17 @@ interface ImportantBookingsCardProps {
 
 export function ImportantBookingsCard({ bookings }: ImportantBookingsCardProps) {
   // Tylko rezerwacje: Aktualne (dziś) lub Nadchodzące (po dziś)
-  // ORAZ mają przynajmniej jeden z dodatków: Wyżywienie, Transport, Prąd, Altana
+  // ORAZ mają przynajmniej jeden z dodatków: Wyżywienie, Transport, Prąd, Altana,
+  // dostawki (>0) lub kapoki dziecięce (>0)
   const today = new Date();
 
   const hasRequiredAddons = (b: Booking) =>
     b.meals === true ||
     b.groupTransport === true ||
     b.electricity === true ||
-    b.gazebo === true;
+    b.gazebo === true ||
+    (b.deliveries ?? 0) > 0 ||
+    (b.childKayaks ?? 0) > 0;
 
   const filtered = bookings
     .filter((b) => hasRequiredAddons(b))
@@ -41,7 +44,7 @@ export function ImportantBookingsCard({ bookings }: ImportantBookingsCardProps) 
         </CardHeader>
         <CardContent>
           <div className="text-muted-foreground py-2">
-            Brak rezerwacji spełniających kryteria (Aktualne/Nadchodzące z: Wyżywienie, Transport, Prąd lub Altana)
+            Brak rezerwacji spełniających kryteria (Aktualne/Nadchodzące z: Wyżywienie, Transport, Prąd, Altana, Dostawki lub Kapoki dziecięce)
           </div>
         </CardContent>
       </Card>
@@ -56,13 +59,19 @@ export function ImportantBookingsCard({ bookings }: ImportantBookingsCardProps) 
       <CardContent>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filtered.map((booking) => {
-            // Pokazujemy tylko cztery wymagane dodatki
+            // Pokazujemy tylko wymagane dodatki
             const addonsToShow = [
               { label: "Wyżywienie", value: booking.meals, type: "boolean" as const },
               { label: "Transport", value: booking.groupTransport, type: "boolean" as const },
               { label: "Prąd", value: booking.electricity, type: "boolean" as const },
               { label: "Altana", value: booking.gazebo, type: "boolean" as const },
-            ].filter((a) => typeof a.value !== "undefined");
+              { label: "Dostawki", value: booking.deliveries, type: "number" as const },
+              { label: "Kapoki dziecięce", value: booking.childKayaks, type: "number" as const },
+            ].filter((a) => {
+              if (a.type === "boolean") return typeof a.value !== "undefined";
+              if (a.type === "number") return typeof a.value === "number" && a.value > 0;
+              return false;
+            });
 
             return (
               <Card key={booking.id} className="p-4">

@@ -26,15 +26,6 @@ type Spot = {
   isAvailable: boolean
 }
 
-async function readCampsites(): Promise<Spot[]> {
-  const supabase = createSupabaseAdminClient()
-  const { data, error } = await supabase.from('campsite_spots').select('payload')
-  if (error) throw error
-  const rows = (data ?? []).map((r: any) => r.payload as Spot)
-  if (rows.length > 0) return rows
-  return defaultCampsites
-}
-
 const defaultCampsites: Spot[] = [
   {
     id: '1',
@@ -109,7 +100,7 @@ export async function GET() {
     const supabase = createSupabaseAdminClient()
     const { data, error } = await supabase.from('campsite_spots').select('payload')
     if (error) throw error
-    const campsites = (data ?? []).map((r: any) => r.payload as Spot)
+    const campsites = (data ?? []).map((r: { payload: Spot }) => r.payload as Spot)
     return NextResponse.json(campsites.length ? campsites : defaultCampsites)
   } catch (error) {
     console.error('Błąd podczas odczytu działek:', error)

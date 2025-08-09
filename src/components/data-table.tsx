@@ -130,14 +130,14 @@ function TableCellViewer({ item, onUpdate }: {
           {item.Imie} {item.Nazwisko}
         </Button>
       </DrawerTrigger>
-      <DrawerContent>
+      <DrawerContent className="flex h-full flex-col">
         <DrawerHeader className="gap-1">
           <DrawerTitle>{item.Imie} {item.Nazwisko}</DrawerTitle>
           <DrawerDescription>
             Szczegóły rezerwacji dla {item.Imie} {item.Nazwisko}
           </DrawerDescription>
         </DrawerHeader>
-        <div className="flex flex-col gap-4 overflow-y-auto px-4 text-sm">
+        <div className="flex-1 overflow-y-auto px-4 text-sm min-h-0">
           <form className="flex flex-col gap-4" onSubmit={(e) => e.preventDefault()}>
             <div className="flex flex-col gap-3">
               <Label htmlFor="imie-nazwisko">Imię i Nazwisko</Label>
@@ -788,23 +788,33 @@ export function DataTable({
       
       {/* Panel wysuwany z lewej strony */}
       {isDrawerOpen && (
-        <div className={
-          `fixed top-0 left-0 h-full z-50 bg-card shadow-2xl transition-transform duration-300 ease-in-out
+        <div
+          className={
+            `fixed top-0 left-0 h-full z-50 bg-card shadow-2xl transition-transform duration-300 ease-in-out
           w-full max-w-full sm:max-w-2xl lg:max-w-xl
           ${isDrawerOpen ? 'translate-x-0' : '-translate-x-full'}`
-        }>
-          <div className="flex justify-between items-center p-4 border-b">
-            <span className="text-lg font-semibold">
-              {editingBooking ? 'Edytuj rezerwację' : 'Nowa rezerwacja'}
-            </span>
-            <Button variant="ghost" onClick={handleClosePanel} aria-label="Zamknij panel">✕</Button>
-          </div>
-          <div className="overflow-y-auto p-6 h-[calc(100vh-64px)]">
-            <BookingForm
-              booking={editingBooking}
-              onSave={editingBooking ? handleUpdate : handleCreate}
-              onCancel={handleClosePanel}
-            />
+          }
+        >
+          <div className="flex h-full flex-col">
+            <div className="flex items-center justify-between border-b p-4">
+              <span className="text-lg font-semibold">
+                {editingBooking ? 'Edytuj rezerwację' : 'Nowa rezerwacja'}
+              </span>
+              <Button
+                variant="ghost"
+                onClick={handleClosePanel}
+                aria-label="Zamknij panel"
+              >
+                ✕
+              </Button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-6 min-h-0">
+              <BookingForm
+                booking={editingBooking}
+                onSave={editingBooking ? handleUpdate : handleCreate}
+                onCancel={handleClosePanel}
+              />
+            </div>
           </div>
         </div>
       )}

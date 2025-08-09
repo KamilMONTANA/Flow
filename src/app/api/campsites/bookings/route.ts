@@ -18,7 +18,7 @@ export async function GET() {
     const supabase = createSupabaseAdminClient()
     const { data, error } = await supabase.from('campsite_bookings').select('payload')
     if (error) throw error
-    const bookings = (data ?? []).map((r: any) => r.payload)
+    const bookings = (data ?? []).map((r: { payload: Booking }) => r.payload)
     return NextResponse.json(bookings)
   } catch {
     console.error('Błąd podczas odczytu rezerwacji')
@@ -57,14 +57,18 @@ export async function PUT(request: NextRequest) {
       .from('campsite_bookings')
       .select('payload')
       .eq('id', id)
-      .single()
+      .single<{ payload: Booking }>()
     if (selError || !data) {
       return NextResponse.json(
         { success: false, message: 'Nie znaleziono rezerwacji' },
         { status: 404 }
       )
     }
-    const updated = { ...(data as any).payload, ...updateData, updatedAt: new Date().toISOString() }
+    const updated: Booking = {
+      ...data.payload,
+      ...(updateData as Partial<Booking>),
+      updatedAt: new Date().toISOString(),
+    }
     const { error } = await supabase
       .from('campsite_bookings')
       .update({ payload: updated })
