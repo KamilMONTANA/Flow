@@ -1,22 +1,46 @@
 export interface CampsiteSpot {
   id: string
   name: string
-  type: 'tent' | 'caravan' | 'camper' | 'glamping'
-  capacity: number
-  pricePerNight: number
-  amenities: string[]
   description?: string
-  isAvailable: boolean
   location: {
     zone: string
     spotNumber: string
   }
+  capacity: number
+  pricePerNight: number
+  /**
+   * Typ działki kempingowej. W starszych wersjach projektu był opcjonalny,
+   * dlatego zachowujemy go jako pole nieobowiązkowe aby umożliwić stopniową
+   * migrację danych.
+   */
+  type?: 'tent' | 'caravan' | 'camper' | 'glamping'
+  /**
+   * Udogodnienia dostępne na danym miejscu. W poprzedniej iteracji były
+   * przechowywane jako tablica stringów, ale większość kodu korzysta z mapy
+   * wartości logicznych. Zmieniamy strukturę na obiekt dla spójności w całym
+   * projekcie.
+   */
+  amenities: {
+    electricity: boolean
+    water: boolean
+    wifi: boolean
+    firePit: boolean
+    picnicTable: boolean
+    shower: boolean
+    toilet: boolean
+  }
+  /**
+   * Informacje o mediach dostępnych na działce. Wykorzystywane głównie przez
+   * siatkę działek (CampsiteGrid).
+   */
   utilities: {
     electricity: boolean
     water: boolean
     sewage: boolean
     wifi: boolean
   }
+  rating?: number
+  isAvailable: boolean
 }
 
 export interface CampsiteBooking {
