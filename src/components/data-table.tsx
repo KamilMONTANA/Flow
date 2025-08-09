@@ -241,7 +241,7 @@ function TableCellViewer({ item, onUpdate }: {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col gap-3">
-                <Label htmlFor="dwuosobowe">Kajaki dwuosobowe</Label>
+                <Label htmlFor="dwuosobowe">Dwuosobowe</Label>
                 <Input
                   id="dwuosobowe"
                   type="number"
@@ -250,7 +250,7 @@ function TableCellViewer({ item, onUpdate }: {
                 />
               </div>
               <div className="flex flex-col gap-3">
-                <Label htmlFor="jednoosobowe">Kajaki jednoosobowe</Label>
+                <Label htmlFor="jednoosobowe">Jednoosobowe</Label>
                 <Input
                   id="jednoosobowe"
                   type="number"
@@ -563,7 +563,7 @@ export function DataTable({
     },
     {
       accessorKey: "dwuosobowe",
-      header: () => <div className="w-full text-right">Kajaki dwuosobowe</div>,
+      header: () => <div className="w-full text-right">Dwuosobowe</div>,
       cell: ({ row }) => (
         <div className="text-right">
           {row.original.dwuosobowe}
@@ -573,7 +573,7 @@ export function DataTable({
     },
     {
       accessorKey: "jednoosobowe",
-      header: () => <div className="w-full text-right">Kajaki jednoosobowe</div>,
+      header: () => <div className="w-full text-right">Jednoosobowe</div>,
       cell: ({ row }) => (
         <div className="text-right">
           {row.original.jednoosobowe}
@@ -604,15 +604,20 @@ export function DataTable({
     },
     {
       accessorKey: "Data",
-      header: "Data i godzina",
+      header: "Data",
       cell: ({ row }) => (
         <div className="text-sm">
           {row.original.Data}
-          {row.original.godzinaSplywu && (
-            <span className="ml-2 text-blue-600 font-medium">
-              o {row.original.godzinaSplywu}
-            </span>
-          )}
+        </div>
+      ),
+      enableSorting: true,
+    },
+    {
+      accessorKey: "godzinaSplywu",
+      header: "Godzina",
+      cell: ({ row }) => (
+        <div className="text-sm">
+          {row.original.godzinaSplywu || "-"}
         </div>
       ),
       enableSorting: true,
@@ -745,6 +750,8 @@ export function DataTable({
         : `row-${Math.random().toString(36).slice(2)}`
     },
     enableRowSelection: false,
+    enableMultiSort: true,
+    isMultiSortEvent: () => true,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
@@ -867,7 +874,8 @@ export function DataTable({
                         <TableCell colSpan={columns.length} className="bg-muted/50">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-2 p-4" tabIndex={0} aria-label={`Szczegóły rezerwacji dla ${row.original.Imie} ${row.original.Nazwisko}`}> 
                             <div><span className="font-medium">Email:</span> {row.original.Email}</div>
-                            <div><span className="font-medium">Data i godzina:</span> {row.original.Data} {row.original.godzinaSplywu && `o ${row.original.godzinaSplywu}`}</div>
+                            <div><span className="font-medium">Data:</span> {row.original.Data}</div>
+                            <div><span className="font-medium">Godzina:</span> {row.original.godzinaSplywu || '-'}</div>
                             <div className="flex items-center gap-2"><span className="font-medium">Wyżywienie:</span> {row.original.meals ? <IconCheck className="text-green-500" /> : <IconX className="text-red-500" />}</div>
                             <div className="flex items-center gap-2"><span className="font-medium">Transport:</span> {row.original.groupTransport ? <IconCheck className="text-green-500" /> : <IconX className="text-red-500" />}</div>
                             <div className="flex items-center gap-2"><span className="font-medium">Prąd:</span> {row.original.electricity ? <IconCheck className="text-green-500" /> : <IconX className="text-red-500" />}</div>
