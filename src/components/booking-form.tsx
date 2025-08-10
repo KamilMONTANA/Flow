@@ -414,9 +414,9 @@ export function BookingForm({ booking, onSave, onCancel }: BookingFormProps) {
                 id="electricity"
                 checked={watch("electricity")}
                 onCheckedChange={(checked) => setValue("electricity", Boolean(checked))}
-                aria-label="Prąd"
+                aria-label="Ognisko"
               />
-              <Label htmlFor="electricity" className="mb-0">Prąd</Label>
+              <Label htmlFor="electricity" className="mb-0">Ognisko</Label>
             </div>
           </div>
           <div className="flex items-center justify-between rounded-md border p-3">

@@ -302,7 +302,7 @@ function TableCellViewer({ item, onUpdate }: {
                   checked={editedData.electricity || false}
                   onCheckedChange={(checked) => setEditedData(prev => ({ ...prev, electricity: checked as boolean }))}
                 />
-                <Label htmlFor="electricity">Prąd</Label>
+                <Label htmlFor="electricity">Ognisko</Label>
               </div>
               <div className="flex items-center gap-2">
                 <Checkbox
@@ -644,7 +644,7 @@ export function DataTable({
     },
     {
       accessorKey: "electricity",
-      header: "Prąd",
+      header: "Ognisko",
       cell: ({ row }) => (
         <div className="flex justify-center">
           {row.original.electricity ? <IconCheck className="text-green-500" /> : <IconX className="text-red-500" />}
@@ -888,7 +888,7 @@ export function DataTable({
                             <div><span className="font-medium">Godzina:</span> {row.original.godzinaSplywu || '-'}</div>
                             <div className="flex items-center gap-2"><span className="font-medium">Wyżywienie:</span> {row.original.meals ? <IconCheck className="text-green-500" /> : <IconX className="text-red-500" />}</div>
                             <div className="flex items-center gap-2"><span className="font-medium">Transport:</span> {row.original.groupTransport ? <IconCheck className="text-green-500" /> : <IconX className="text-red-500" />}</div>
-                            <div className="flex items-center gap-2"><span className="font-medium">Prąd:</span> {row.original.electricity ? <IconCheck className="text-green-500" /> : <IconX className="text-red-500" />}</div>
+                            <div className="flex items-center gap-2"><span className="font-medium">Ognisko:</span> {row.original.electricity ? <IconCheck className="text-green-500" /> : <IconX className="text-red-500" />}</div>
                             <div className="flex items-center gap-2"><span className="font-medium">Altana:</span> {row.original.gazebo ? <IconCheck className="text-green-500" /> : <IconX className="text-red-500" />}</div>
                             <div><span className="font-medium">Kierowcy:</span> {row.original.driversCount || 0}</div>
                             <div><span className="font-medium">Kapoki dziecięce:</span> {row.original.childKayaks || 0}</div>

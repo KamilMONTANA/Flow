@@ -7,7 +7,7 @@ import { Booking } from "@/types/booking"
 import { format } from "date-fns"
 import { pl } from "date-fns/locale"
 import { isAfter, isSameDay } from "date-fns"
-import { IconCheck, IconX } from "@tabler/icons-react"
+import { IconCheck } from "@tabler/icons-react"
 
 interface ImportantBookingsCardProps {
   bookings: Booking[]
@@ -16,7 +16,7 @@ interface ImportantBookingsCardProps {
 
 export function ImportantBookingsCard({ bookings }: ImportantBookingsCardProps) {
   // Tylko rezerwacje: Aktualne (dziś) lub Nadchodzące (po dziś)
-  // ORAZ mają przynajmniej jeden z dodatków: Wyżywienie, Transport, Prąd, Altana,
+  // ORAZ mają przynajmniej jeden z dodatków: Wyżywienie, Transport, Ognisko, Altana,
   // dostawki (>0) lub kapoki dziecięce (>0)
   const today = new Date();
 
@@ -44,7 +44,7 @@ export function ImportantBookingsCard({ bookings }: ImportantBookingsCardProps) 
         </CardHeader>
         <CardContent>
           <div className="text-muted-foreground py-2">
-            Brak rezerwacji spełniających kryteria (Aktualne/Nadchodzące z: Wyżywienie, Transport, Prąd, Altana, Dostawki lub Kapoki dziecięce)
+            Brak rezerwacji spełniających kryteria (Aktualne/Nadchodzące z: Wyżywienie, Transport, Ognisko, Altana, Dostawki lub Kapoki dziecięce)
           </div>
         </CardContent>
       </Card>
@@ -63,12 +63,12 @@ export function ImportantBookingsCard({ bookings }: ImportantBookingsCardProps) 
             const addonsToShow = [
               { label: "Wyżywienie", value: booking.meals, type: "boolean" as const },
               { label: "Transport", value: booking.groupTransport, type: "boolean" as const },
-              { label: "Prąd", value: booking.electricity, type: "boolean" as const },
+              { label: "Ognisko", value: booking.electricity, type: "boolean" as const },
               { label: "Altana", value: booking.gazebo, type: "boolean" as const },
               { label: "Dostawki", value: booking.deliveries, type: "number" as const },
               { label: "Kapoki dziecięce", value: booking.childKayaks, type: "number" as const },
             ].filter((a) => {
-              if (a.type === "boolean") return typeof a.value !== "undefined";
+              if (a.type === "boolean") return a.value === true;
               if (a.type === "number") return typeof a.value === "number" && a.value > 0;
               return false;
             });
@@ -90,11 +90,7 @@ export function ImportantBookingsCard({ bookings }: ImportantBookingsCardProps) 
                         <div key={idx} className="flex items-center gap-2">
                           <span className="text-sm text-muted-foreground">{a.label}:</span>
                           {a.type === "boolean" ? (
-                            a.value ? (
-                              <IconCheck className="text-green-500" />
-                            ) : (
-                              <IconX className="text-red-500" />
-                            )
+                            <IconCheck className="text-green-500" />
                           ) : (
                             <span className="text-sm font-medium">{String(a.value)}</span>
                           )}
