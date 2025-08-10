@@ -14,7 +14,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Plus, Edit, Trash2, Search, Eye, Calendar, Users, MapPin, Star, Zap, Droplet, Wifi } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
-import { CampsiteBookings } from '@/components/campsite-bookings'
 import { CampsiteSpot, CampsiteBooking } from '@/types/campsite'
 
 export default function CampsitesPage() {
@@ -57,10 +56,14 @@ export default function CampsitesPage() {
   const loadData = async () => {
     try {
       const [spotsResponse, bookingsResponse] = await Promise.all([
-        fetch('/api/campsites/spots'),
-        fetch('/api/campsites/bookings')
+        fetch('/api/campsites/spots', { cache: 'no-store' }),
+        fetch('/api/campsites/bookings', { cache: 'no-store' })
       ])
-      
+
+      if (!spotsResponse.ok || !bookingsResponse.ok) {
+        throw new Error('Failed to fetch campsite data')
+      }
+
       const spotsData = await spotsResponse.json()
       const bookingsData = await bookingsResponse.json()
       
@@ -206,8 +209,8 @@ export default function CampsitesPage() {
 
   if (selectedSpot) {
     return (
-      <SpotDetailView 
-        spot={selectedSpot} 
+      <SpotDetailView
+        spot={selectedSpot}
         bookings={bookings.filter(b => b.spotId === selectedSpot.id)}
         onBack={() => setSelectedSpot(null)}
         onRefresh={loadData}
@@ -217,12 +220,6 @@ export default function CampsitesPage() {
 
   return (
     <div className="container mx-auto py-8 px-4">
-      <Tabs defaultValue="spots">
-        <TabsList className="mb-6">
-          <TabsTrigger value="spots">Pola</TabsTrigger>
-          <TabsTrigger value="bookings">Rezerwacje</TabsTrigger>
-        </TabsList>
-        <TabsContent value="spots">
           <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Pola namiotowe</h1>
         <Button onClick={() => setIsCreateDialogOpen(true)}>
@@ -610,14 +607,6 @@ export default function CampsitesPage() {
           </div>
         </div>
       )}
-        </TabsContent>
-        <TabsContent value="bookings">
-          <div className="flex justify-between items-center mb-6">
-            <h1 className="text-3xl font-bold">Rezerwacje</h1>
-          </div>
-          <CampsiteBookings bookings={bookings} spots={spots} onUpdate={loadData} />
-        </TabsContent>
-      </Tabs>
     </div>
   )
 }
