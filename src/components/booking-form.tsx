@@ -8,6 +8,7 @@ import { format } from "date-fns"
 
 
 import { Booking } from "@/types/booking"
+import { Equipment } from "@/types/inventory"
 import { useRoutes } from "@/contexts/routes-context"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -115,6 +116,53 @@ export function BookingForm({ booking, onSave, onCancel }: BookingFormProps) {
       if (requiresCampsite && !values.acceptCampsiteTerms) {
         throw new Error("Musisz zaakceptować regulamin pola namiotowego")
       }
+
+      // Sprawdź dostępność sprzętu w inwentarzu dla wybranego dnia
+      try {
+        const [equipmentRes, bookingsRes] = await Promise.all([
+          fetch('/api/inventory/equipment'),
+          fetch('/api/data', { cache: 'no-store' }),
+        ])
+
+        if (equipmentRes.ok && bookingsRes.ok) {
+          const equipment: Equipment[] = await equipmentRes.json()
+          const bookings: Booking[] = await bookingsRes.json()
+
+          const totalTwoPerson = equipment
+            .filter(e => e.name.toLowerCase().includes('dwu') || e.name.includes('2'))
+            .reduce((sum, e) => sum + (e.quantity || 0), 0)
+          const totalOnePerson = equipment
+            .filter(e => e.name.toLowerCase().includes('jedn') || e.name.includes('1'))
+            .reduce((sum, e) => sum + (e.quantity || 0), 0)
+
+          const sameDayBookings = bookings.filter(
+            b => b.Data === values.Data && b.id !== (booking?.id ?? -1)
+          )
+          const reservedTwo = sameDayBookings.reduce(
+            (sum, b) => sum + (Number(b.dwuosobowe) || 0),
+            0
+          )
+          const reservedOne = sameDayBookings.reduce(
+            (sum, b) => sum + (Number(b.jednoosobowe) || 0),
+            0
+          )
+
+          const availableTwo = totalTwoPerson - reservedTwo
+          const availableOne = totalOnePerson - reservedOne
+
+          if (values.dwuosobowe > availableTwo) {
+            throw new Error(
+              `Brak dostępnych kajaków dwuosobowych na ten dzień. Pozostało ${availableTwo}`
+            )
+          }
+          if (values.jednoosobowe > availableOne) {
+            throw new Error(
+              `Brak dostępnych kajaków jednoosobowych na ten dzień. Pozostało ${availableOne}`
+            )
+          }
+        }
+      } catch {}
+
       // Rejestr audytu akceptacji (opcjonalnie, bez blokowania zapisu)
       try {
         if (values.acceptKayakTerms) {
@@ -197,8 +245,9 @@ export function BookingForm({ booking, onSave, onCancel }: BookingFormProps) {
       }
       onSave(newBooking)
       toast.success(booking ? "Zaktualizowano rezerwację" : "Utworzono nową rezerwację")
-    } catch {
-      toast.error("Błąd podczas zapisywania rezerwacji")
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Błąd podczas zapisywania rezerwacji'
+      toast.error(message)
     }
   }
 
