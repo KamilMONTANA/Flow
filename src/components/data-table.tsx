@@ -705,16 +705,24 @@ export function DataTable({
               variant="ghost"
               className="data-[state=open]:bg-muted text-muted-foreground flex size-8"
               size="icon"
+              onClick={(e) => e.stopPropagation()}
             >
               <IconDotsVertical />
               <span className="sr-only">Open menu</span>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-32">
-            <DropdownMenuItem onClick={() => {
-              setEditingBooking(row.original)
-              setIsDrawerOpen(true)
-            }}>
+          <DropdownMenuContent
+            align="end"
+            className="w-32"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <DropdownMenuItem
+              onClick={(e) => {
+                e.stopPropagation()
+                setEditingBooking(row.original)
+                setIsDrawerOpen(true)
+              }}
+            >
               Edytuj
             </DropdownMenuItem>
             <DropdownMenuSeparator />
