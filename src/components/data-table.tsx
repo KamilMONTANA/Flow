@@ -371,6 +371,10 @@ export function DataTable({
 }) {
   const [data, setData] = React.useState(() => initialData)
 
+  React.useEffect(() => {
+    setData(initialData)
+  }, [initialData])
+
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({
       Email: false,
