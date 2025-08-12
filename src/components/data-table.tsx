@@ -422,48 +422,63 @@ export function DataTable({
       })
 
       if (!response.ok) {
-        const text = await response.text().catch(() => '')
-        throw new Error(`HTTP ${response.status} ${text}`)
+        let message = `HTTP ${response.status}`
+        try {
+          const data = await response.json()
+          message = data.message || message
+        } catch {
+          const text = await response.text().catch(() => '')
+          if (text) message = text
+        }
+        throw new Error(message)
       }
 
       if (externalRefreshData) externalRefreshData()
       toast.success('Zaktualizowano rezerwację')
     } catch (error) {
       console.error('Błąd podczas aktualizacji:', error)
-      toast.error('Błąd podczas aktualizacji')
+      const message = error instanceof Error ? error.message : 'Błąd podczas aktualizacji'
+      toast.error(message)
       throw error
     }
   }
 
   // Tworzenie – w tym UI generujemy pełny snapshot i zapisujemy całą listę POST /api/data
   // (alternatywnie można dodać dedykowany POST pojedynczego rekordu – obecny backend wspiera POST jako overwrite listy)
-  const handleCreate = (newBooking: Booking) => {
-    // nadaj unikalne id, jeśli nie ma
+  const handleCreate = async (newBooking: Booking) => {
     const id: number = typeof newBooking.id === 'number' ? newBooking.id : Date.now()
     const bookingWithId: Booking = { ...newBooking, id }
 
-    // Wyślij tylko pojedynczy rekord do API i dopiero po sukcesie zaktualizuj stan
-    fetch('/api/data', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(bookingWithId),
-    })
-      .then(async (response) => {
-        if (!response.ok) {
+    try {
+      const response = await fetch('/api/data', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(bookingWithId),
+      })
+
+      if (!response.ok) {
+        let message = `HTTP ${response.status}`
+        try {
+          const data = await response.json()
+          message = data.message || message
+        } catch {
           const text = await response.text().catch(() => '')
-          throw new Error(`HTTP ${response.status} ${text}`)
+          if (text) message = text
         }
-        setData((prev) => [...prev, bookingWithId])
-        if (externalRefreshData) externalRefreshData()
-        toast.success('Utworzono rezerwację')
-        setIsDrawerOpen(false)
-      })
-      .catch((error) => {
-        console.error('Błąd podczas zapisywania:', error)
-        toast.error('Błąd podczas zapisywania rezerwacji')
-      })
+        throw new Error(message)
+      }
+
+      setData((prev) => [...prev, bookingWithId])
+      if (externalRefreshData) externalRefreshData()
+      toast.success('Utworzono rezerwację')
+      setIsDrawerOpen(false)
+    } catch (error) {
+      console.error('Błąd podczas zapisywania:', error)
+      const message = error instanceof Error ? error.message : 'Błąd podczas zapisywania rezerwacji'
+      toast.error(message)
+    }
   }
 
   // Usuwanie wyłącznie po jednoznacznym "id" rekordu,
