@@ -80,13 +80,15 @@ export default function CampsitesPage() {
   }
 
   const filteredSpots = spots.filter(spot => {
-    const matchesSearch = spot.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         spot.location.zone.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesZone = selectedZone === 'all' || spot.location.zone === selectedZone
+    const spotName = spot.name?.toLowerCase() ?? ''
+    const spotZone = spot.location?.zone?.toLowerCase() ?? ''
+    const matchesSearch = spotName.includes(searchTerm.toLowerCase()) ||
+                         spotZone.includes(searchTerm.toLowerCase())
+    const matchesZone = selectedZone === 'all' || (spot.location?.zone ?? '') === selectedZone
     return matchesSearch && matchesZone
   })
 
-  const zones = Array.from(new Set(spots.map(spot => spot.location.zone)))
+  const zones = Array.from(new Set(spots.map(spot => spot.location?.zone || '')))
 
   const handleCreateSpot = async () => {
     setIsSaving(true)
@@ -275,7 +277,9 @@ export default function CampsitesPage() {
                 <div className="space-y-2">
                   <div className="flex items-center text-sm">
                     <MapPin className="w-4 h-4 mr-2" />
-                    <span>{spot.location.zone} - {spot.location.spotNumber}</span>
+                    <span>
+                      {(spot.location?.zone || 'Brak strefy')} - {(spot.location?.spotNumber || '')}
+                    </span>
                   </div>
                   <div className="flex items-center text-sm">
                     <Users className="w-4 h-4 mr-2" />
@@ -830,7 +834,9 @@ function SpotDetailView({ spot, bookings, onBack, onRefresh }: {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <span className="text-gray-500">Lokalizacja:</span>
-                    <p className="font-medium">{spot.location.zone} - {spot.location.spotNumber}</p>
+                    <p className="font-medium">
+                      {(spot.location?.zone || 'Brak strefy')} - {(spot.location?.spotNumber || '')}
+                    </p>
                   </div>
                   <div>
                     <span className="text-gray-500">Pojemność:</span>
