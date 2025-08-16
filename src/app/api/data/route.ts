@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import type { Booking } from '@/types/booking'
 import { bookingSchema } from '@/types/booking'
-import type { Equipment } from '@/types/inventory'
+import type { Equipment, Category } from '@/types/inventory' // typy z inwentarza: sprzęt i kategorie
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 
 export const dynamic = 'force-dynamic'
@@ -24,21 +24,32 @@ async function checkKayakAvailability(
 ) {
   try {
     const { data: equipmentRows } = await supabase
-      .from('equipment')
+      .from('inventory_equipment') // odczytaj sprzęt z tabeli inwentarza
       .select('payload')
     const equipment = (equipmentRows ?? []).map(
       (r: { payload: Equipment }) => r.payload
     )
+
+    const { data: categoryRows } = await supabase
+      .from('inventory_categories') // odczytaj kategorie sprzętu
+      .select('payload')
+    const categories = (categoryRows ?? []).map(
+      (r: { payload: Category }) => r.payload
+    )
+
+    const twoCatIds = categories
+      .filter(c => c.name.toLowerCase().includes('dwu'))
+      .map(c => c.id) // identyfikatory kategorii kajaków dwuosobowych
+    const oneCatIds = categories
+      .filter(c => c.name.toLowerCase().includes('jedno'))
+      .map(c => c.id) // identyfikatory kategorii kajaków jednoosobowych
+
     const totalTwo = equipment
-      .filter(
-        (e) => e.name.toLowerCase().includes('dwu') || e.name.includes('2')
-      )
-      .reduce((sum, e) => sum + (e.quantity || 0), 0)
+      .filter(e => twoCatIds.includes(e.categoryId))
+      .reduce((sum, e) => sum + (e.quantity || 0), 0) // zlicz wszystkie kajaki dwuosobowe
     const totalOne = equipment
-      .filter(
-        (e) => e.name.toLowerCase().includes('jedn') || e.name.includes('1')
-      )
-      .reduce((sum, e) => sum + (e.quantity || 0), 0)
+      .filter(e => oneCatIds.includes(e.categoryId))
+      .reduce((sum, e) => sum + (e.quantity || 0), 0) // zlicz wszystkie kajaki jednoosobowe
 
     const { data: existingRows } = await supabase
       .from('reservations')
