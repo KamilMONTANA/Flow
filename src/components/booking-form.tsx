@@ -8,7 +8,7 @@ import { format } from "date-fns"
 
 
 import { Booking } from "@/types/booking"
-import { Equipment } from "@/types/inventory"
+import { Equipment, Category } from "@/types/inventory" // typy z inwentarza: sprzęt i kategorie
 import { useRoutes } from "@/contexts/routes-context"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -56,9 +56,10 @@ const formSchema = z.object({
   gazebo: z.boolean(),
   driversCount: z.number().min(0),
   childKayaks: z.number().min(0),
-  deliveries: z.number().min(0),
-  // Akceptacje regulaminów
-  acceptKayakTerms: z.boolean().refine(v => v === true, "Wymagana akceptacja regulaminu wypożyczenia kajaków"),
+    deliveries: z.number().min(0),
+    dryBags: z.number().min(0), // liczba worków wodoszczelnych
+    // Akceptacje regulaminów
+    acceptKayakTerms: z.boolean().refine(v => v === true, "Wymagana akceptacja umowy kajakowej"),
   acceptCampsiteTerms: z.boolean().optional(),
   
 })
@@ -84,11 +85,12 @@ export function BookingForm({ booking, onSave, onCancel }: BookingFormProps) {
       groupTransport: booking?.groupTransport || false,
       electricity: booking?.electricity || false,
       gazebo: booking?.gazebo || false,
-      driversCount: booking?.driversCount ?? 0,
-      childKayaks: booking?.childKayaks ?? 0,
-      deliveries: booking?.deliveries ?? 0,
-      acceptKayakTerms: false,
-      acceptCampsiteTerms: false,
+        driversCount: booking?.driversCount ?? 0,
+        childKayaks: booking?.childKayaks ?? 0,
+        deliveries: booking?.deliveries ?? 0,
+        dryBags: booking?.dryBags ?? 0, // domyślna liczba worków wodoszczelnych
+        acceptKayakTerms: false,
+        acceptCampsiteTerms: false,
       
     },
   })
@@ -111,7 +113,7 @@ export function BookingForm({ booking, onSave, onCancel }: BookingFormProps) {
       const requiresKayak = (values.dwuosobowe > 0) || (values.jednoosobowe > 0)
       const requiresCampsite = values.electricity || values.gazebo
       if (requiresKayak && !values.acceptKayakTerms) {
-        throw new Error("Musisz zaakceptować regulamin wypożyczenia kajaków")
+        throw new Error("Nie można dokonać rezerwacji kajaka – umowa nie została zaakceptowana") // komunikat gdy brak akceptacji regulaminu
       }
       if (requiresCampsite && !values.acceptCampsiteTerms) {
         throw new Error("Musisz zaakceptować regulamin pola namiotowego")
@@ -119,21 +121,30 @@ export function BookingForm({ booking, onSave, onCancel }: BookingFormProps) {
 
       // Sprawdź dostępność sprzętu w inwentarzu dla wybranego dnia
       try {
-        const [equipmentRes, bookingsRes] = await Promise.all([
-          fetch('/api/inventory/equipment'),
-          fetch('/api/data', { cache: 'no-store' }),
+        const [equipmentRes, categoriesRes, bookingsRes] = await Promise.all([
+          fetch('/api/inventory/equipment'), // odczyt całego sprzętu
+          fetch('/api/inventory/categories'), // lista kategorii sprzętu
+          fetch('/api/data', { cache: 'no-store' }), // istniejące rezerwacje
         ])
 
-        if (equipmentRes.ok && bookingsRes.ok) {
+        if (equipmentRes.ok && categoriesRes.ok && bookingsRes.ok) {
           const equipment: Equipment[] = await equipmentRes.json()
+          const categories: Category[] = await categoriesRes.json()
           const bookings: Booking[] = await bookingsRes.json()
 
+          const twoCatIds = categories
+            .filter(c => c.name.toLowerCase().includes('dwu'))
+            .map(c => c.id) // identyfikatory kategorii kajaków dwuosobowych
+          const oneCatIds = categories
+            .filter(c => c.name.toLowerCase().includes('jedno'))
+            .map(c => c.id) // identyfikatory kategorii kajaków jednoosobowych
+
           const totalTwoPerson = equipment
-            .filter(e => e.name.toLowerCase().includes('dwu') || e.name.includes('2'))
-            .reduce((sum, e) => sum + (e.quantity || 0), 0)
+            .filter(e => twoCatIds.includes(e.categoryId))
+            .reduce((sum, e) => sum + (e.quantity || 0), 0) // zlicz liczbę kajaków dwuosobowych
           const totalOnePerson = equipment
-            .filter(e => e.name.toLowerCase().includes('jedn') || e.name.includes('1'))
-            .reduce((sum, e) => sum + (e.quantity || 0), 0)
+            .filter(e => oneCatIds.includes(e.categoryId))
+            .reduce((sum, e) => sum + (e.quantity || 0), 0) // zlicz liczbę kajaków jednoosobowych
 
           const sameDayBookings = bookings.filter(
             b => b.Data === values.Data && b.id !== (booking?.id ?? -1)
@@ -161,7 +172,9 @@ export function BookingForm({ booking, onSave, onCancel }: BookingFormProps) {
             )
           }
         }
-      } catch {}
+      } catch (error) {
+        throw error // przekaż błąd dalej, aby wyświetlić powiadomienie
+      }
 
       // Rejestr audytu akceptacji (opcjonalnie, bez blokowania zapisu)
       try {
@@ -216,6 +229,7 @@ export function BookingForm({ booking, onSave, onCancel }: BookingFormProps) {
         driversCount: values.driversCount,
         childKayaks: values.childKayaks,
         deliveries: values.deliveries,
+        dryBags: values.dryBags, // zapis liczby worków wodoszczelnych
         createdAt: booking?.createdAt || now,
         updatedAt: now,
         history: booking?.history || [
@@ -512,6 +526,17 @@ export function BookingForm({ booking, onSave, onCancel }: BookingFormProps) {
             />
             {errors.deliveries && <p className="text-sm text-red-500">{errors.deliveries.message}</p>}
           </div>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="dryBags">Worki wodoszczelne</Label> {/* liczba worków dodanych do rezerwacji */}
+            <Input
+              id="dryBags"
+              type="number"
+              min="0"
+              {...register("dryBags", { valueAsNumber: true })}
+              aria-label="Worki wodoszczelne"
+            />
+            {errors.dryBags && <p className="text-sm text-red-500">{errors.dryBags.message}</p>}
+          </div>
         </div>
       </div>
 
@@ -529,6 +554,7 @@ export function BookingForm({ booking, onSave, onCancel }: BookingFormProps) {
               />
               <Label htmlFor="acceptKayakTerms" className="mb-0">Akceptuję regulamin wypożyczenia kajaków (wymagane przy rezerwacji kajaków)</Label>
             </div>
+            {errors.acceptKayakTerms && <p className="text-sm text-red-500">{errors.acceptKayakTerms.message}</p>} {/* komunikat gdy brak akceptacji */}
           </div>
           <div className="flex items-center justify-between rounded-md border p-3">
             <div className="flex items-center gap-3">

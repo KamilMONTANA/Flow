@@ -342,6 +342,16 @@ function TableCellViewer({ item, onUpdate }: {
                   onChange={(e) => setEditedData(prev => ({ ...prev, deliveries: parseInt(e.target.value) || 0 }))}
                 />
               </div>
+              <div className="flex flex-col gap-3">
+                <Label htmlFor="dryBags">Worki wodoszczelne</Label> {/* pole na liczbę worków wodoszczelnych */}
+                <Input
+                  id="dryBags"
+                  type="number"
+                  min="0"
+                  value={editedData.dryBags || 0}
+                  onChange={(e) => setEditedData(prev => ({ ...prev, dryBags: parseInt(e.target.value) || 0 }))}
+                />
+              </div>
             </div>
           </form>
         </div>
@@ -385,6 +395,7 @@ export function DataTable({
       driversCount: false,
       childKayaks: false,
       deliveries: false,
+      dryBags: false, // kolumna dla worków wodoszczelnych domyślnie ukryta
     })
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
@@ -712,6 +723,16 @@ export function DataTable({
       enableHiding: true,
     },
     {
+      accessorKey: "dryBags",
+      header: "Worki wodoszczelne",
+      cell: ({ row }) => (
+        <div className="text-center">
+          {row.original.dryBags || 0}
+        </div>
+      ),
+      enableHiding: true,
+    }, // kolumna pokazująca ilość worków wodoszczelnych
+    {
       id: "actions",
       cell: ({ row }) => (
         <DropdownMenu>
@@ -920,6 +941,7 @@ export function DataTable({
                             <div><span className="font-medium">Kierowcy:</span> {row.original.driversCount || 0}</div>
                             <div><span className="font-medium">Kapoki dziecięce:</span> {row.original.childKayaks || 0}</div>
                             <div><span className="font-medium">Dostawki:</span> {row.original.deliveries || 0}</div>
+                            <div><span className="font-medium">Worki wodoszczelne:</span> {row.original.dryBags || 0}</div> {/* pokaz liczbę worków */}
                           </div>
                         </TableCell>
                       </TableRow>

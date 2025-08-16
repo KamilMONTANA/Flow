@@ -44,20 +44,38 @@ CREATE TABLE public.campsite_bookings (
 );
 
 -- Inventory tables (cars, categories, equipment)
-CREATE TABLE public.inventory_cars (
+CREATE TABLE public.inventory_cars ( -- Tabela samochodów w inwentarzu
     id TEXT PRIMARY KEY,
     payload JSONB NOT NULL
 );
 
-CREATE TABLE public.inventory_categories (
+CREATE TABLE public.inventory_categories ( -- Tabela kategorii sprzętu
     id TEXT PRIMARY KEY,
     payload JSONB NOT NULL
 );
 
-CREATE TABLE public.inventory_equipment (
+CREATE TABLE public.inventory_equipment ( -- Tabela pojedynczych elementów sprzętu
     id TEXT PRIMARY KEY,
     payload JSONB NOT NULL
 );
+
+-- Seed initial inventory categories
+INSERT INTO public.inventory_categories (id, payload) VALUES
+  ('kajaki', '{"id":"kajaki","name":"Kajaki","color":"#3b82f6","description":"Kajaki jedno- i dwuosobowe"}'), -- kategoria kajaków
+  ('worki', '{"id":"worki","name":"Worki wodoszczelne","color":"#10b981","description":"Sprzęt do ochrony bagażu"}'), -- kategoria worków
+  ('kamizelki', '{"id":"kamizelki","name":"Kamizelki ratunkowe","color":"#f59e0b","description":"Kamizelki dla uczestników"}'), -- kategoria kamizelek
+  ('pojazdy', '{"id":"pojazdy","name":"Pojazdy","color":"#6b7280","description":"Samochody i inne pojazdy"}'); -- kategoria pojazdów
+
+-- Seed initial equipment items
+INSERT INTO public.inventory_equipment (id, payload) VALUES
+  ('kajak1', '{"id":"kajak1","name":"Kajak jednoosobowy","quantity":10,"categoryId":"kajaki","description":"Kajak dla jednej osoby","condition":"good"}'), -- kajak jednoosobowy
+  ('kajak2', '{"id":"kajak2","name":"Kajak dwuosobowy","quantity":5,"categoryId":"kajaki","description":"Kajak dla dwóch osób","condition":"good"}'), -- kajak dwuosobowy
+  ('worek20l', '{"id":"worek20l","name":"Worek wodoszczelny 20L","quantity":20,"categoryId":"worki","description":"20-litrowy worek wodoszczelny","condition":"new"}'), -- worek wodoszczelny 20L
+  ('kamizelka', '{"id":"kamizelka","name":"Kamizelka ratunkowa","quantity":30,"categoryId":"kamizelki","description":"Uniwersalna kamizelka ratunkowa","condition":"good"}'); -- kamizelka ratunkowa
+
+-- Seed initial vehicles
+INSERT INTO public.inventory_cars (id, payload) VALUES
+  ('bus9', '{"id":"bus9","brand":"Ford","model":"Transit","year":2021,"licensePlate":"XYZ123","capacity":9,"quantity":2,"condition":"good","categoryId":"pojazdy"}'); -- przykładowy bus 9-osobowy
 
 -- Dashboard data (singleton)
 CREATE TABLE public.dashboard_data (
@@ -82,9 +100,9 @@ CREATE INDEX idx_routes_route_index ON public.routes ((payload->>'Trasa'));
 
 CREATE INDEX idx_campsite_spots_payload_gin ON public.campsite_spots USING GIN(payload);
 CREATE INDEX idx_campsite_bookings_payload_gin ON public.campsite_bookings USING GIN(payload);
-CREATE INDEX idx_inventory_cars_payload_gin ON public.inventory_cars USING GIN(payload);
-CREATE INDEX idx_inventory_categories_payload_gin ON public.inventory_categories USING GIN(payload);
-CREATE INDEX idx_inventory_equipment_payload_gin ON public.inventory_equipment USING GIN(payload);
+CREATE INDEX idx_inventory_cars_payload_gin ON public.inventory_cars USING GIN(payload); -- indeks JSONB dla samochodów
+CREATE INDEX idx_inventory_categories_payload_gin ON public.inventory_categories USING GIN(payload); -- indeks JSONB dla kategorii
+CREATE INDEX idx_inventory_equipment_payload_gin ON public.inventory_equipment USING GIN(payload); -- indeks JSONB dla sprzętu
 CREATE INDEX idx_dashboard_data_payload_gin ON public.dashboard_data USING GIN(payload);
 CREATE INDEX idx_document_acceptances_payload_gin ON public.document_acceptances USING GIN(payload);
 
@@ -93,9 +111,9 @@ ALTER TABLE public.reservations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.routes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.campsite_spots ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.campsite_bookings ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.inventory_cars ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.inventory_categories ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.inventory_equipment ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.inventory_cars ENABLE ROW LEVEL SECURITY; -- włącz RLS dla samochodów
+ALTER TABLE public.inventory_categories ENABLE ROW LEVEL SECURITY; -- włącz RLS dla kategorii
+ALTER TABLE public.inventory_equipment ENABLE ROW LEVEL SECURITY; -- włącz RLS dla sprzętu
 ALTER TABLE public.dashboard_data ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.document_acceptances ENABLE ROW LEVEL SECURITY;
 
@@ -133,17 +151,17 @@ USING (true)
 WITH CHECK (true);
 
 -- Inventory tables: Strict service role access
-CREATE POLICY "Full access for service role" ON public.inventory_cars
+CREATE POLICY "Full access for service role" ON public.inventory_cars -- pełny dostęp roli serwisowej do samochodów
 FOR ALL TO service_role
 USING (true)
 WITH CHECK (true);
 
-CREATE POLICY "Full access for service role" ON public.inventory_categories
+CREATE POLICY "Full access for service role" ON public.inventory_categories -- pełny dostęp roli serwisowej do kategorii
 FOR ALL TO service_role
 USING (true)
 WITH CHECK (true);
 
-CREATE POLICY "Full access for service role" ON public.inventory_equipment
+CREATE POLICY "Full access for service role" ON public.inventory_equipment -- pełny dostęp roli serwisowej do sprzętu
 FOR ALL TO service_role
 USING (true)
 WITH CHECK (true);
