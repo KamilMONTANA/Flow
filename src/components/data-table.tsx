@@ -96,21 +96,17 @@ function TableCellViewer({ item, onUpdate }: {
   const handleSave = async () => {
     setIsSaving(true)
     try {
-      onUpdate(editedData)
-      
-      const closeButton = document.querySelector('[data-drawer-close]')
-      if (closeButton) {
-        (closeButton as HTMLElement).click()
-      }
-      
+      await onUpdate(editedData)
       toast.success('Zapisano zmiany')
     } catch {
       toast.error('Błąd podczas zapisywania')
     } finally {
       setIsSaving(false)
-      // Resetuj edytowane dane po zapisaniu
-      setEditedData(editedData)
     }
+  }
+
+  const handleCancel = () => {
+    setEditedData(item)
   }
 
   const handleInputChange = (field: keyof Booking, value: string) => {
@@ -134,14 +130,14 @@ function TableCellViewer({ item, onUpdate }: {
           {item.Imie} {item.Nazwisko}
         </Button>
       </DrawerTrigger>
-      <DrawerContent>
+      <DrawerContent className="flex h-full flex-col">
         <DrawerHeader className="gap-1">
           <DrawerTitle>{item.Imie} {item.Nazwisko}</DrawerTitle>
           <DrawerDescription>
             Szczegóły rezerwacji dla {item.Imie} {item.Nazwisko}
           </DrawerDescription>
         </DrawerHeader>
-        <div className="flex flex-col gap-4 overflow-y-auto px-4 text-sm">
+        <div className="flex-1 overflow-y-auto px-4 text-sm min-h-0">
           <form className="flex flex-col gap-4" onSubmit={(e) => e.preventDefault()}>
             <div className="flex flex-col gap-3">
               <Label htmlFor="imie-nazwisko">Imię i Nazwisko</Label>
@@ -245,7 +241,7 @@ function TableCellViewer({ item, onUpdate }: {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col gap-3">
-                <Label htmlFor="dwuosobowe">Kajaki dwuosobowe</Label>
+                <Label htmlFor="dwuosobowe">Dwuosobowe</Label>
                 <Input
                   id="dwuosobowe"
                   type="number"
@@ -254,7 +250,7 @@ function TableCellViewer({ item, onUpdate }: {
                 />
               </div>
               <div className="flex flex-col gap-3">
-                <Label htmlFor="jednoosobowe">Kajaki jednoosobowe</Label>
+                <Label htmlFor="jednoosobowe">Jednoosobowe</Label>
                 <Input
                   id="jednoosobowe"
                   type="number"
@@ -306,7 +302,7 @@ function TableCellViewer({ item, onUpdate }: {
                   checked={editedData.electricity || false}
                   onCheckedChange={(checked) => setEditedData(prev => ({ ...prev, electricity: checked as boolean }))}
                 />
-                <Label htmlFor="electricity">Prąd</Label>
+                <Label htmlFor="electricity">Ognisko</Label>
               </div>
               <div className="flex items-center gap-2">
                 <Checkbox
@@ -346,15 +342,29 @@ function TableCellViewer({ item, onUpdate }: {
                   onChange={(e) => setEditedData(prev => ({ ...prev, deliveries: parseInt(e.target.value) || 0 }))}
                 />
               </div>
+              <div className="flex flex-col gap-3">
+                <Label htmlFor="dryBags">Worki wodoszczelne</Label> {/* pole na liczbę worków wodoszczelnych */}
+                <Input
+                  id="dryBags"
+                  type="number"
+                  min="0"
+                  value={editedData.dryBags || 0}
+                  onChange={(e) => setEditedData(prev => ({ ...prev, dryBags: parseInt(e.target.value) || 0 }))}
+                />
+              </div>
             </div>
           </form>
         </div>
         <DrawerFooter>
-          <Button onClick={handleSave} disabled={isSaving}>
-            {isSaving ? 'Zapisywanie...' : 'Zapisz'}
-          </Button>
           <DrawerClose asChild>
-            <Button variant="outline" data-drawer-close>Zamknij</Button>
+            <Button onClick={handleSave} disabled={isSaving}>
+              {isSaving ? 'Zapisywanie...' : 'Zapisz'}
+            </Button>
+          </DrawerClose>
+          <DrawerClose asChild>
+            <Button variant="outline" onClick={handleCancel}>
+              Anuluj
+            </Button>
           </DrawerClose>
         </DrawerFooter>
       </DrawerContent>
@@ -371,6 +381,10 @@ export function DataTable({
 }) {
   const [data, setData] = React.useState(() => initialData)
 
+  React.useEffect(() => {
+    setData(initialData)
+  }, [initialData])
+
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({
       Email: false,
@@ -381,6 +395,7 @@ export function DataTable({
       driversCount: false,
       childKayaks: false,
       deliveries: false,
+      dryBags: false, // kolumna dla worków wodoszczelnych domyślnie ukryta
     })
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
@@ -400,65 +415,81 @@ export function DataTable({
   }, [routes]);
 
   // Aktualizacja pojedynczego rekordu po id -> PUT /api/data
-  const handleUpdate = (updatedItem: Booking) => {
+  const handleUpdate = async (updatedItem: Booking) => {
     setData((prevData) => {
       const newData = prevData.map((item) =>
         item.id === updatedItem.id ? updatedItem : item
       )
+      return newData
+    })
 
-      fetch('/api/data', {
+    try {
+      const response = await fetch('/api/data', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(updatedItem),
       })
-        .then(async (response) => {
-          if (!response.ok) {
-            const text = await response.text().catch(() => '')
-            throw new Error(`HTTP ${response.status} ${text}`)
-          }
-          if (externalRefreshData) externalRefreshData()
-          toast.success('Zaktualizowano rezerwację')
-        })
-        .catch((error) => {
-          console.error('Błąd podczas aktualizacji:', error)
-          toast.error('Błąd podczas aktualizacji')
-        })
 
-      return newData
-    })
+      if (!response.ok) {
+        let message = `HTTP ${response.status}`
+        try {
+          const data = await response.json()
+          message = data.message || message
+        } catch {
+          const text = await response.text().catch(() => '')
+          if (text) message = text
+        }
+        throw new Error(message)
+      }
+
+      if (externalRefreshData) externalRefreshData()
+      toast.success('Zaktualizowano rezerwację')
+    } catch (error) {
+      console.error('Błąd podczas aktualizacji:', error)
+      const message = error instanceof Error ? error.message : 'Błąd podczas aktualizacji'
+      toast.error(message)
+      throw error
+    }
   }
 
   // Tworzenie – w tym UI generujemy pełny snapshot i zapisujemy całą listę POST /api/data
   // (alternatywnie można dodać dedykowany POST pojedynczego rekordu – obecny backend wspiera POST jako overwrite listy)
-  const handleCreate = (newBooking: Booking) => {
-    // nadaj unikalne id, jeśli nie ma
+  const handleCreate = async (newBooking: Booking) => {
     const id: number = typeof newBooking.id === 'number' ? newBooking.id : Date.now()
     const bookingWithId: Booking = { ...newBooking, id }
 
-    // Wyślij tylko pojedynczy rekord do API i dopiero po sukcesie zaktualizuj stan
-    fetch('/api/data', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(bookingWithId),
-    })
-      .then(async (response) => {
-        if (!response.ok) {
+    try {
+      const response = await fetch('/api/data', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(bookingWithId),
+      })
+
+      if (!response.ok) {
+        let message = `HTTP ${response.status}`
+        try {
+          const data = await response.json()
+          message = data.message || message
+        } catch {
           const text = await response.text().catch(() => '')
-          throw new Error(`HTTP ${response.status} ${text}`)
+          if (text) message = text
         }
-        setData((prev) => [...prev, bookingWithId])
-        if (externalRefreshData) externalRefreshData()
-        toast.success('Utworzono rezerwację')
-        setIsDrawerOpen(false)
-      })
-      .catch((error) => {
-        console.error('Błąd podczas zapisywania:', error)
-        toast.error('Błąd podczas zapisywania rezerwacji')
-      })
+        throw new Error(message)
+      }
+
+      setData((prev) => [...prev, bookingWithId])
+      if (externalRefreshData) externalRefreshData()
+      toast.success('Utworzono rezerwację')
+      setIsDrawerOpen(false)
+    } catch (error) {
+      console.error('Błąd podczas zapisywania:', error)
+      const message = error instanceof Error ? error.message : 'Błąd podczas zapisywania rezerwacji'
+      toast.error(message)
+    }
   }
 
   // Usuwanie wyłącznie po jednoznacznym "id" rekordu,
@@ -562,7 +593,7 @@ export function DataTable({
     },
     {
       accessorKey: "dwuosobowe",
-      header: () => <div className="w-full text-right">Kajaki dwuosobowe</div>,
+      header: () => <div className="w-full text-right">Dwuosobowe</div>,
       cell: ({ row }) => (
         <div className="text-right">
           {row.original.dwuosobowe}
@@ -572,7 +603,7 @@ export function DataTable({
     },
     {
       accessorKey: "jednoosobowe",
-      header: () => <div className="w-full text-right">Kajaki jednoosobowe</div>,
+      header: () => <div className="w-full text-right">Jednoosobowe</div>,
       cell: ({ row }) => (
         <div className="text-right">
           {row.original.jednoosobowe}
@@ -603,15 +634,20 @@ export function DataTable({
     },
     {
       accessorKey: "Data",
-      header: "Data i godzina",
+      header: "Data",
       cell: ({ row }) => (
         <div className="text-sm">
           {row.original.Data}
-          {row.original.godzinaSplywu && (
-            <span className="ml-2 text-blue-600 font-medium">
-              o {row.original.godzinaSplywu}
-            </span>
-          )}
+        </div>
+      ),
+      enableSorting: true,
+    },
+    {
+      accessorKey: "godzinaSplywu",
+      header: "Godzina",
+      cell: ({ row }) => (
+        <div className="text-sm">
+          {row.original.godzinaSplywu || "-"}
         </div>
       ),
       enableSorting: true,
@@ -638,7 +674,7 @@ export function DataTable({
     },
     {
       accessorKey: "electricity",
-      header: "Prąd",
+      header: "Ognisko",
       cell: ({ row }) => (
         <div className="flex justify-center">
           {row.original.electricity ? <IconCheck className="text-green-500" /> : <IconX className="text-red-500" />}
@@ -687,6 +723,16 @@ export function DataTable({
       enableHiding: true,
     },
     {
+      accessorKey: "dryBags",
+      header: "Worki wodoszczelne",
+      cell: ({ row }) => (
+        <div className="text-center">
+          {row.original.dryBags || 0}
+        </div>
+      ),
+      enableHiding: true,
+    }, // kolumna pokazująca ilość worków wodoszczelnych
+    {
       id: "actions",
       cell: ({ row }) => (
         <DropdownMenu>
@@ -695,16 +741,24 @@ export function DataTable({
               variant="ghost"
               className="data-[state=open]:bg-muted text-muted-foreground flex size-8"
               size="icon"
+              onClick={(e) => e.stopPropagation()}
             >
               <IconDotsVertical />
               <span className="sr-only">Open menu</span>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-32">
-            <DropdownMenuItem onClick={() => {
-              setEditingBooking(row.original)
-              setIsDrawerOpen(true)
-            }}>
+          <DropdownMenuContent
+            align="end"
+            className="w-32"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <DropdownMenuItem
+              onClick={(e) => {
+                e.stopPropagation()
+                setEditingBooking(row.original)
+                setIsDrawerOpen(true)
+              }}
+            >
               Edytuj
             </DropdownMenuItem>
             <DropdownMenuSeparator />
@@ -744,6 +798,8 @@ export function DataTable({
         : `row-${Math.random().toString(36).slice(2)}`
     },
     enableRowSelection: false,
+    enableMultiSort: true,
+    isMultiSortEvent: () => true,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
@@ -780,23 +836,33 @@ export function DataTable({
       
       {/* Panel wysuwany z lewej strony */}
       {isDrawerOpen && (
-        <div className={
-          `fixed top-0 left-0 h-full z-50 bg-card shadow-2xl transition-transform duration-300 ease-in-out
+        <div
+          className={
+            `fixed top-0 left-0 h-full z-50 bg-card shadow-2xl transition-transform duration-300 ease-in-out
           w-full max-w-full sm:max-w-2xl lg:max-w-xl
           ${isDrawerOpen ? 'translate-x-0' : '-translate-x-full'}`
-        }>
-          <div className="flex justify-between items-center p-4 border-b">
-            <span className="text-lg font-semibold">
-              {editingBooking ? 'Edytuj rezerwację' : 'Nowa rezerwacja'}
-            </span>
-            <Button variant="ghost" onClick={handleClosePanel} aria-label="Zamknij panel">✕</Button>
-          </div>
-          <div className="overflow-y-auto p-6 h-[calc(100vh-64px)]">
-            <BookingForm
-              booking={editingBooking}
-              onSave={editingBooking ? handleUpdate : handleCreate}
-              onCancel={handleClosePanel}
-            />
+          }
+        >
+          <div className="flex h-full flex-col">
+            <div className="flex items-center justify-between border-b p-4">
+              <span className="text-lg font-semibold">
+                {editingBooking ? 'Edytuj rezerwację' : 'Nowa rezerwacja'}
+              </span>
+              <Button
+                variant="ghost"
+                onClick={handleClosePanel}
+                aria-label="Zamknij panel"
+              >
+                ✕
+              </Button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-6 min-h-0">
+              <BookingForm
+                booking={editingBooking}
+                onSave={editingBooking ? handleUpdate : handleCreate}
+                onCancel={handleClosePanel}
+              />
+            </div>
           </div>
         </div>
       )}
@@ -866,14 +932,16 @@ export function DataTable({
                         <TableCell colSpan={columns.length} className="bg-muted/50">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-2 p-4" tabIndex={0} aria-label={`Szczegóły rezerwacji dla ${row.original.Imie} ${row.original.Nazwisko}`}> 
                             <div><span className="font-medium">Email:</span> {row.original.Email}</div>
-                            <div><span className="font-medium">Data i godzina:</span> {row.original.Data} {row.original.godzinaSplywu && `o ${row.original.godzinaSplywu}`}</div>
+                            <div><span className="font-medium">Data:</span> {row.original.Data}</div>
+                            <div><span className="font-medium">Godzina:</span> {row.original.godzinaSplywu || '-'}</div>
                             <div className="flex items-center gap-2"><span className="font-medium">Wyżywienie:</span> {row.original.meals ? <IconCheck className="text-green-500" /> : <IconX className="text-red-500" />}</div>
                             <div className="flex items-center gap-2"><span className="font-medium">Transport:</span> {row.original.groupTransport ? <IconCheck className="text-green-500" /> : <IconX className="text-red-500" />}</div>
-                            <div className="flex items-center gap-2"><span className="font-medium">Prąd:</span> {row.original.electricity ? <IconCheck className="text-green-500" /> : <IconX className="text-red-500" />}</div>
+                            <div className="flex items-center gap-2"><span className="font-medium">Ognisko:</span> {row.original.electricity ? <IconCheck className="text-green-500" /> : <IconX className="text-red-500" />}</div>
                             <div className="flex items-center gap-2"><span className="font-medium">Altana:</span> {row.original.gazebo ? <IconCheck className="text-green-500" /> : <IconX className="text-red-500" />}</div>
                             <div><span className="font-medium">Kierowcy:</span> {row.original.driversCount || 0}</div>
                             <div><span className="font-medium">Kapoki dziecięce:</span> {row.original.childKayaks || 0}</div>
                             <div><span className="font-medium">Dostawki:</span> {row.original.deliveries || 0}</div>
+                            <div><span className="font-medium">Worki wodoszczelne:</span> {row.original.dryBags || 0}</div> {/* pokaz liczbę worków */}
                           </div>
                         </TableCell>
                       </TableRow>

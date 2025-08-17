@@ -26,95 +26,17 @@ type Spot = {
   isAvailable: boolean
 }
 
-async function readCampsites(): Promise<Spot[]> {
-  const supabase = createSupabaseAdminClient()
-  const { data, error } = await supabase.from('campsite_spots').select('payload')
-  if (error) throw error
-  const rows = (data ?? []).map((r: any) => r.payload as Spot)
-  if (rows.length > 0) return rows
-  return defaultCampsites
-}
-
-const defaultCampsites: Spot[] = [
-  {
-    id: '1',
-    name: 'Działka A1',
-    description: 'Cicha działka w lesie, idealna dla rodzin',
-    location: {
-      zone: 'A',
-      spotNumber: '1'
-    },
-    capacity: 4,
-    pricePerNight: 80,
-    amenities: {
-      electricity: true,
-      water: false,
-      wifi: true,
-      firePit: true,
-      picnicTable: true,
-      shower: false,
-      toilet: false
-    },
-    rating: 4.5,
-    isAvailable: true
-  },
-  {
-    id: '2',
-    name: 'Działka B3',
-    description: 'Działka z pełnym przyłączem, idealna dla kamperów',
-    location: {
-      zone: 'B',
-      spotNumber: '3'
-    },
-    capacity: 6,
-    pricePerNight: 120,
-    amenities: {
-      electricity: true,
-      water: true,
-      wifi: true,
-      firePit: false,
-      picnicTable: true,
-      shower: true,
-      toilet: true
-    },
-    rating: 4.8,
-    isAvailable: true
-  },
-  {
-    id: '3',
-    name: 'Glamping Premium',
-    description: 'Luksusowy namiot glampingowy z łazienką',
-    location: {
-      zone: 'Premium',
-      spotNumber: '1'
-    },
-    capacity: 2,
-    pricePerNight: 250,
-    amenities: {
-      electricity: true,
-      water: true,
-      wifi: true,
-      firePit: false,
-      picnicTable: false,
-      shower: true,
-      toilet: true
-    },
-    rating: 4.9,
-    isAvailable: true
-  }
-]
-
 export async function GET() {
   try {
     const supabase = createSupabaseAdminClient()
     const { data, error } = await supabase.from('campsite_spots').select('payload')
     if (error) throw error
-    const campsites = (data ?? []).map((r: any) => r.payload as Spot)
-    return NextResponse.json(campsites.length ? campsites : defaultCampsites)
+    const campsites = (data ?? []).map((r: { payload: Spot }) => r.payload as Spot)
+    return NextResponse.json(campsites)
   } catch (error) {
     console.error('Błąd podczas odczytu działek:', error)
-    // Fallback: zwróć dane domyślne zamiast 500, aby UI działał offline/bez DB
-    return NextResponse.json(defaultCampsites, { status: 200 })
+    // Fallback: zwróć pustą listę, aby UI mógł się renderować bez danych
+    return NextResponse.json([], { status: 200 })
   }
 }
 

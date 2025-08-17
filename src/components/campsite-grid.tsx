@@ -129,8 +129,8 @@ export function CampsiteGrid({ spots, onUpdate }: CampsiteGridProps) {
                     </div>
                   </CardDescription>
                 </div>
-                <Badge className={getTypeColor(spot.type)}>
-                  {getTypeLabel(spot.type)}
+                <Badge className={getTypeColor(spot.type || 'tent')}>
+                  {getTypeLabel(spot.type || 'tent')}
                 </Badge>
               </div>
             </CardHeader>

@@ -5,11 +5,9 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
-  Legend,
   Pie,
   PieChart,
   ResponsiveContainer,
-  Tooltip,
   XAxis,
   YAxis,
 } from "recharts"
