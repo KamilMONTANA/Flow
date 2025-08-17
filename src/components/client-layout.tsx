@@ -6,6 +6,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/app-sidebar"
 import { DrawerProvider } from "@/contexts/drawer-context"
 import { RoutesProvider } from "@/contexts/routes-context"
+import { Toaster } from "@/components/ui/sonner"
 
 type ClientLayoutProps = {
   children: React.ReactNode
@@ -28,6 +29,7 @@ export const ClientLayout: React.FC<ClientLayoutProps> = ({ children }) => {
     return (
       <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white text-gray-900">
         {children}
+        <Toaster richColors position="top-right" closeButton />
       </div>
     )
   }
@@ -46,6 +48,7 @@ export const ClientLayout: React.FC<ClientLayoutProps> = ({ children }) => {
             <main className="flex-1">
               {children}
             </main>
+            <Toaster richColors position="top-right" closeButton />
           </div>
         </RoutesProvider>
       </DrawerProvider>

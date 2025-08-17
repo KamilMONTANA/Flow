@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { CampsiteSpot } from '@/types/campsite'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -12,9 +12,10 @@ import { Calendar } from '@/components/ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Checkbox } from '@/components/ui/checkbox'
 import { CalendarIcon } from 'lucide-react'
-import { format } from 'date-fns'
+import { format, isAfter, isBefore } from 'date-fns'
 import { pl } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
+import { toast } from 'sonner'
 
 export default function NewReservationPage() {
   const router = useRouter()
@@ -24,6 +25,7 @@ export default function NewReservationPage() {
   const [spot, setSpot] = useState<CampsiteSpot | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const isSubmittingRef = useRef(false)
   
   const [formData, setFormData] = useState({
     customerName: '',
@@ -33,6 +35,7 @@ export default function NewReservationPage() {
     checkIn: new Date(),
     checkOut: new Date(Date.now() + 24 * 60 * 60 * 1000), // +1 day
     notes: '',
+    acceptKayakTerms: false, // Dodane pole akceptacji regulaminu
     // Dodatki w cenie
     addons: {
       firePit: false,
@@ -79,9 +82,53 @@ export default function NewReservationPage() {
     
     if (!spot) return
 
+    if (isSubmittingRef.current) {
+      return
+    }
+
+    // Wymagana akceptacja regulaminu przed utworzeniem rezerwacji
+    if (!formData.acceptKayakTerms) {
+      toast.error('Nie można utworzyć rezerwacji — brak akceptacji umowy', {
+        description: 'Zaznacz pole „Akceptuję regulamin wypożyczenia kajaków”.'
+      })
+      isSubmittingRef.current = false
+      return
+    }
+
+    isSubmittingRef.current = true
     setSaving(true)
     
     try {
+      // Sprawdź dostępność kajaków
+      const availabilityResponse = await fetch('/api/campsites/check-availability', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          checkIn: formData.checkIn,
+          checkOut: formData.checkOut,
+          numberOfPeople: formData.numberOfPeople
+        }),
+      })
+
+      const availabilityData = await availabilityResponse.json()
+
+      if (!availabilityResponse.ok) {
+        throw new Error(availabilityData.error || 'Błąd podczas sprawdzania dostępności')
+      }
+
+      if (!availabilityData.isAvailable) {
+        toast.error(
+          `Brak dostępnych kajaków dwuosobowych na ten dzień. Pozostało ${availabilityData.availableKayaks}`,
+          { description: 'Wybierz inny termin lub zmniejsz liczbę osób.' }
+        )
+        setSaving(false)
+        isSubmittingRef.current = false
+        return
+      }
+
+      // Kontynuuj z rezerwacją, jeśli kajaki są dostępne
       const response = await fetch('/api/campsites/bookings', {
         method: 'POST',
         headers: {
@@ -98,12 +145,15 @@ export default function NewReservationPage() {
       if (response.ok) {
         router.push('/campsites')
       } else {
-        console.error('Błąd podczas zapisywania rezerwacji')
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Błąd podczas zapisywania rezerwacji')
       }
     } catch (error) {
       console.error('Błąd:', error)
+      toast.error(error instanceof Error ? error.message : 'Wystąpił nieoczekiwany błąd')
     } finally {
       setSaving(false)
+      isSubmittingRef.current = false
     }
   }
 
@@ -122,6 +172,13 @@ export default function NewReservationPage() {
         ...prev.addons,
         [addon]: checked as boolean
       }
+    }))
+  }
+
+  const handleCheckboxChange = (name: string, checked: boolean) => {
+    setFormData(prev => ({
+      ...prev,
+      [name]: checked
     }))
   }
   
@@ -394,6 +451,29 @@ export default function NewReservationPage() {
                 <p className="text-sm text-gray-600 mt-1">
                   {Math.ceil((formData.checkOut.getTime() - formData.checkIn.getTime()) / (1000 * 60 * 60 * 24))} dni × {formData.numberOfPeople} osób × {spot.pricePerNight} zł/noc
                 </p>
+              </div>
+
+              <div className="space-y-4 p-4 border rounded-lg">
+                <div className="space-y-2">
+                  <div className="flex items-start space-x-2">
+                    <div className="flex items-center h-5 mt-0.5">
+                      <Checkbox 
+                        id="acceptKayakTerms" 
+                        checked={formData.acceptKayakTerms}
+                        onCheckedChange={(checked) => handleCheckboxChange('acceptKayakTerms', checked as boolean)}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label htmlFor="acceptKayakTerms" className="font-normal">
+                        Akceptuję regulamin wypożyczenia kajaków *
+                      </Label>
+                      <p className="text-sm text-muted-foreground">
+                        Wymagane do rezerwacji kajaków. <a href="/regulamin-kajaki" className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">Przeczytaj regulamin</a>
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <div className="flex gap-4">
