@@ -274,6 +274,7 @@ export function BookingForm({ booking, onSave, onCancel }: BookingFormProps) {
       toast.success(booking ? "Zaktualizowano rezerwację" : "Utworzono nową rezerwację")
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Błąd podczas zapisywania rezerwacji'
+      alert(message) // wyświetlamy jasny popup informujący o błędzie
       toast.error(message)
     }
   }
