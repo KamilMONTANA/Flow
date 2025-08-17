@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseAdminClient } from '@/lib/supabase/server'
+import { randomUUID } from 'crypto'
 
 // GET - zwraca listę kategorii z Supabase
 export async function GET() {
@@ -23,22 +24,34 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const supabase = createSupabaseAdminClient() // klient z uprawnieniami serwisowymi
-    const categories = (await request.json()) as Record<string, unknown>[] // pełna lista kategorii z żądania
-    const { error: delError } = await supabase
-      .from('inventory_categories')
-      .delete()
-      .neq('id', null) // najpierw usuń wszystkie istniejące rekordy
-    if (delError) throw delError
-    const rows = categories.map((c) => ({ id: (c as { id: string }).id, payload: c })) // przygotowanie rekordów do wstawienia
+    const body = await request.json()
+
+    // Walidacja: oczekujemy tablicy kategorii
+    if (!Array.isArray(body)) {
+      return NextResponse.json(
+        { success: false, message: 'Payload musi być tablicą kategorii' },
+        { status: 400 }
+      )
+    }
+
+    type Category = { id?: string } & Record<string, unknown>
+    const rows = (body as Category[]).map((c) => {
+      const id = (typeof c.id === 'string' && c.id.trim().length > 0) ? c.id : randomUUID()
+      return { id, payload: { ...c, id } }
+    })
+
+    // Upsert zamiast kasowania wszystkiego – bezpieczniejsze i atomowe per wiersz
     const { error } = await supabase
       .from('inventory_categories')
-      .insert(rows) // wstaw nową listę kategorii
+      .upsert(rows, { onConflict: 'id' })
     if (error) throw error
-    return NextResponse.json({ success: true, message: 'Kategorie zapisane pomyślnie' }) // informacja o sukcesie
-  } catch {
-    console.error('Błąd podczas zapisywania kategorii')
+
+    return NextResponse.json({ success: true, message: 'Kategorie zapisane pomyślnie', count: rows.length })
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Nieznany błąd'
+    console.error('Błąd podczas zapisywania kategorii:', message)
     return NextResponse.json(
-      { success: false, message: 'Błąd podczas zapisywania kategorii' },
+      { success: false, message: `Błąd podczas zapisywania kategorii: ${message}` },
       { status: 500 }
     )
   }
