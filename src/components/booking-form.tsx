@@ -113,10 +113,12 @@ export function BookingForm({ booking, onSave, onCancel }: BookingFormProps) {
       const requiresKayak = (values.dwuosobowe > 0) || (values.jednoosobowe > 0)
       const requiresCampsite = values.electricity || values.gazebo
       if (requiresKayak && !values.acceptKayakTerms) {
-        throw new Error("Nie można dokonać rezerwacji kajaka – umowa nie została zaakceptowana") // komunikat gdy brak akceptacji regulaminu
+        // Powiadom gdy próba zapisu bez zaakceptowania umowy kajakowej
+        throw new Error("Nie można zapisać rezerwacji – umowa kajakowa nie została zaakceptowana")
       }
       if (requiresCampsite && !values.acceptCampsiteTerms) {
-        throw new Error("Musisz zaakceptować regulamin pola namiotowego")
+        // Powiadom gdy próba zapisu bez zaakceptowania umowy pola namiotowego
+        throw new Error("Nie można zapisać rezerwacji – umowa pola namiotowego nie została zaakceptowana")
       }
 
       // Sprawdź dostępność sprzętu w inwentarzu dla wybranego dnia
@@ -138,6 +140,14 @@ export function BookingForm({ booking, onSave, onCancel }: BookingFormProps) {
           const oneCatIds = categories
             .filter(c => c.name.toLowerCase().includes('jedno'))
             .map(c => c.id) // identyfikatory kategorii kajaków jednoosobowych
+
+          // Upewnij się, że w inwentarzu istnieją wymagane kategorie kajaków
+          if (twoCatIds.length === 0) {
+            throw new Error("Brak kategorii dla kajaków dwuosobowych w inwentarzu")
+          }
+          if (oneCatIds.length === 0) {
+            throw new Error("Brak kategorii dla kajaków jednoosobowych w inwentarzu")
+          }
 
           const totalTwoPerson = equipment
             .filter(e => twoCatIds.includes(e.categoryId))
@@ -161,14 +171,17 @@ export function BookingForm({ booking, onSave, onCancel }: BookingFormProps) {
           const availableTwo = totalTwoPerson - reservedTwo
           const availableOne = totalOnePerson - reservedOne
 
+          // Blokuj rezerwację jeśli użytkownik przekracza limit dostępnych kajaków
           if (values.dwuosobowe > availableTwo) {
+            const exceed = values.dwuosobowe - availableTwo // o ile przekroczono limit dwuosobowych
             throw new Error(
-              `Brak dostępnych kajaków dwuosobowych na ten dzień. Pozostało ${availableTwo}`
+              `Nie można utworzyć rezerwacji: przekroczy ona limit kajaków dwuosobowych o ${exceed}`
             )
           }
           if (values.jednoosobowe > availableOne) {
+            const exceed = values.jednoosobowe - availableOne // o ile przekroczono limit jednoosobowych
             throw new Error(
-              `Brak dostępnych kajaków jednoosobowych na ten dzień. Pozostało ${availableOne}`
+              `Nie można utworzyć rezerwacji: przekroczy ona limit kajaków jednoosobowych o ${exceed}`
             )
           }
         }
@@ -261,6 +274,7 @@ export function BookingForm({ booking, onSave, onCancel }: BookingFormProps) {
       toast.success(booking ? "Zaktualizowano rezerwację" : "Utworzono nową rezerwację")
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Błąd podczas zapisywania rezerwacji'
+      alert(message) // wyświetlamy jasny popup informujący o błędzie
       toast.error(message)
     }
   }
