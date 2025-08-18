@@ -40,10 +40,19 @@ export async function POST(request: NextRequest) {
       return { id, payload: { ...c, id } }
     })
 
-    // Upsert zamiast kasowania wszystkiego – bezpieczniejsze i atomowe per wiersz
+    // Usuń wszystkie istniejące kategorie, aby zapis odzwierciedlał dokładnie
+    // to, co przesłano z klienta. Dzięki temu usunięcia w UI są również
+    // propagowane do Supabase.
+    const { error: delError } = await supabase
+      .from('inventory_categories')
+      .delete()
+      .neq('id', null)
+    if (delError) throw delError
+
+    // Wstaw nową listę kategorii
     const { error } = await supabase
       .from('inventory_categories')
-      .upsert(rows, { onConflict: 'id' })
+      .insert(rows)
     if (error) throw error
 
     return NextResponse.json({ success: true, message: 'Kategorie zapisane pomyślnie', count: rows.length })
