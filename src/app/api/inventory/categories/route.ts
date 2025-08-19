@@ -36,10 +36,12 @@ export async function POST(request: NextRequest) {
 
     type Category = { id?: string } & Record<string, unknown>
     const rows = (body as Category[]).map((c) => {
+      // Upewnij się, że każda kategoria ma poprawne ID
       const id = (typeof c.id === 'string' && c.id.trim().length > 0) ? c.id : randomUUID()
       return { id, payload: { ...c, id } }
     })
 
+<<<<<<< Updated upstream
     // Usuń wszystkie istniejące kategorie, aby zapis odzwierciedlał dokładnie
     // to, co przesłano z klienta. Dzięki temu usunięcia w UI są również
     // propagowane do Supabase.
@@ -50,6 +52,19 @@ export async function POST(request: NextRequest) {
     if (delError) throw delError
 
     // Wstaw nową listę kategorii
+=======
+    // Najpierw usuń kategorie, których nie ma w nowej liście
+    const newIds = rows.map(row => row.id)
+    if (newIds.length > 0) {
+      const { error: deleteError } = await supabase
+        .from('inventory_categories')
+        .delete()
+        .not('id', 'in', newIds)
+      if (deleteError) throw deleteError
+    }
+
+    // Upsert zamiast kasowania wszystkiego – bezpieczniejsze i atomowe per wiersz
+>>>>>>> Stashed changes
     const { error } = await supabase
       .from('inventory_categories')
       .insert(rows)

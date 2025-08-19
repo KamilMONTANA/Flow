@@ -72,10 +72,15 @@ export function CategoryManager({ categories, setCategories }: CategoryManagerPr
       description: formData.description.trim()
     }
     const newCategories = [...categories, newCategory]
-    setCategories(newCategories)
-    await saveCategories(newCategories)
-    setIsDrawerOpen(false)
-    resetForm()
+    const success = await saveCategories(newCategories)
+    if (success) {
+      setCategories(newCategories)
+      setIsDrawerOpen(false)
+      resetForm()
+    } else {
+      console.error('Nie udało się zapisać nowej kategorii')
+      // Można tutaj dodać powiadomienie dla użytkownika
+    }
   }
 
   const handleUpdate = async () => {
@@ -88,16 +93,26 @@ export function CategoryManager({ categories, setCategories }: CategoryManagerPr
         ? { ...cat, name: formData.name.trim(), color: formData.color, description: formData.description.trim() }
         : cat
     )
-    setCategories(newCategories)
-    await saveCategories(newCategories)
-    setIsDrawerOpen(false)
-    resetForm()
+    const success = await saveCategories(newCategories)
+    if (success) {
+      setCategories(newCategories)
+      setIsDrawerOpen(false)
+      resetForm()
+    } else {
+      console.error('Nie udało się zaktualizować kategorii')
+      // Można tutaj dodać powiadomienie dla użytkownika
+    }
   }
 
   const handleDelete = async (id: string) => {
     const newCategories = categories.filter(cat => cat.id !== id)
-    setCategories(newCategories)
-    await saveCategories(newCategories)
+    const success = await saveCategories(newCategories)
+    if (success) {
+      setCategories(newCategories)
+    } else {
+      console.error('Nie udało się usunąć kategorii')
+      // Można tutaj dodać powiadomienie dla użytkownika
+    }
   }
 
   const resetForm = () => {
