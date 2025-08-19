@@ -42,6 +42,7 @@ export async function POST(request: NextRequest) {
     })
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     // Usuń wszystkie istniejące kategorie, aby zapis odzwierciedlał dokładnie
     // to, co przesłano z klienta. Dzięki temu usunięcia w UI są również
     // propagowane do Supabase.
@@ -53,6 +54,8 @@ export async function POST(request: NextRequest) {
 
     // Wstaw nową listę kategorii
 =======
+=======
+>>>>>>> Stashed changes
     // Najpierw usuń kategorie, których nie ma w nowej liście
     const newIds = rows.map(row => row.id)
     if (newIds.length > 0) {
