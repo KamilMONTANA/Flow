@@ -333,6 +333,17 @@ function TableCellViewer({ item, onUpdate }: {
                 />
               </div>
               <div className="flex flex-col gap-3">
+                <Label htmlFor="kayakPrice">Cena za kajak</Label>
+                <Input
+                  id="kayakPrice"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={editedData.kayakPrice || 0}
+                  onChange={(e) => setEditedData(prev => ({ ...prev, kayakPrice: parseFloat(e.target.value) || 0 }))}
+                />
+              </div>
+              <div className="flex flex-col gap-3">
                 <Label htmlFor="deliveries">Ilość dostawek</Label>
                 <Input
                   id="deliveries"
@@ -394,6 +405,7 @@ export function DataTable({
       gazebo: false,
       driversCount: false,
       childKayaks: false,
+      kayakPrice: false,
       deliveries: false,
       dryBags: false, // kolumna dla worków wodoszczelnych domyślnie ukryta
     })
@@ -713,6 +725,16 @@ export function DataTable({
       enableHiding: true,
     },
     {
+      accessorKey: "kayakPrice",
+      header: "Cena za kajak",
+      cell: ({ row }) => (
+        <div className="text-center">
+          {row.original.kayakPrice || 0}
+        </div>
+      ),
+      enableHiding: true,
+    },
+    {
       accessorKey: "deliveries",
       header: "Dostawki",
       cell: ({ row }) => (
@@ -940,6 +962,7 @@ export function DataTable({
                             <div className="flex items-center gap-2"><span className="font-medium">Altana:</span> {row.original.gazebo ? <IconCheck className="text-green-500" /> : <IconX className="text-red-500" />}</div>
                             <div><span className="font-medium">Kierowcy:</span> {row.original.driversCount || 0}</div>
                             <div><span className="font-medium">Kapoki dziecięce:</span> {row.original.childKayaks || 0}</div>
+                            <div><span className="font-medium">Cena za kajak:</span> {row.original.kayakPrice || 0}</div>
                             <div><span className="font-medium">Dostawki:</span> {row.original.deliveries || 0}</div>
                             <div><span className="font-medium">Worki wodoszczelne:</span> {row.original.dryBags || 0}</div> {/* pokaz liczbę worków */}
                           </div>

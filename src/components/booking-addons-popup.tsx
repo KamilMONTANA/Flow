@@ -83,6 +83,7 @@ export function BookingAddonsPopup({ booking, open, onOpenChange }: BookingAddon
             {renderAddonInfo("Altana", booking.gazebo)}
             {renderAddonInfo("Kierowcy", booking.driversCount)}
             {renderAddonInfo("Kapoki dziecięce", booking.childKayaks)}
+            {renderAddonInfo("Cena za kajak", booking.kayakPrice)}
             {renderAddonInfo("Dostawki", booking.deliveries)}
             {renderAddonInfo("Worki wodoszczelne", booking.dryBags)} {/* liczba dodanych worków wodoszczelnych */}
           </div>

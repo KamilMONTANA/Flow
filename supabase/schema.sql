@@ -68,8 +68,8 @@ INSERT INTO public.inventory_categories (id, payload) VALUES
 
 -- Seed initial equipment items
 INSERT INTO public.inventory_equipment (id, payload) VALUES
-  ('kajak1', '{"id":"kajak1","name":"Kajak jednoosobowy","quantity":10,"categoryId":"kajaki","description":"Kajak dla jednej osoby","condition":"good"}'), -- kajak jednoosobowy
-  ('kajak2', '{"id":"kajak2","name":"Kajak dwuosobowy","quantity":5,"categoryId":"kajaki","description":"Kajak dla dwóch osób","condition":"good"}'), -- kajak dwuosobowy
+  ('kajak1', '{"id":"kajak1","name":"Kajak jednoosobowy","quantity":10,"categoryId":"kajaki","description":"Kajak dla jednej osoby","condition":"good","price":50}'), -- kajak jednoosobowy
+  ('kajak2', '{"id":"kajak2","name":"Kajak dwuosobowy","quantity":5,"categoryId":"kajaki","description":"Kajak dla dwóch osób","condition":"good","price":80}'), -- kajak dwuosobowy
   ('worek20l', '{"id":"worek20l","name":"Worek wodoszczelny 20L","quantity":20,"categoryId":"worki","description":"20-litrowy worek wodoszczelny","condition":"new"}'), -- worek wodoszczelny 20L
   ('kamizelka', '{"id":"kamizelka","name":"Kamizelka ratunkowa","quantity":30,"categoryId":"kamizelki","description":"Uniwersalna kamizelka ratunkowa","condition":"good"}'); -- kamizelka ratunkowa
 

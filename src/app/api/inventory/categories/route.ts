@@ -41,21 +41,6 @@ export async function POST(request: NextRequest) {
       return { id, payload: { ...c, id } }
     })
 
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-    // Usuń wszystkie istniejące kategorie, aby zapis odzwierciedlał dokładnie
-    // to, co przesłano z klienta. Dzięki temu usunięcia w UI są również
-    // propagowane do Supabase.
-    const { error: delError } = await supabase
-      .from('inventory_categories')
-      .delete()
-      .neq('id', null)
-    if (delError) throw delError
-
-    // Wstaw nową listę kategorii
-=======
-=======
->>>>>>> Stashed changes
     // Najpierw usuń kategorie, których nie ma w nowej liście
     const newIds = rows.map(row => row.id)
     if (newIds.length > 0) {
@@ -67,10 +52,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Upsert zamiast kasowania wszystkiego – bezpieczniejsze i atomowe per wiersz
->>>>>>> Stashed changes
     const { error } = await supabase
       .from('inventory_categories')
-      .insert(rows)
+      .upsert(rows)
     if (error) throw error
 
     return NextResponse.json({ success: true, message: 'Kategorie zapisane pomyślnie', count: rows.length })

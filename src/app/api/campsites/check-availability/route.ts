@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
+import type { Equipment, Category } from '@/types/inventory';
 
 export async function POST(request: Request) {
   try {
@@ -18,18 +19,33 @@ export async function POST(request: Request) {
       throw new Error('Błąd podczas pobierania rezerwacji');
     }
 
-    // Pobierz całkowitą liczbę dostępnych kajaków
-    const { data: kayaks, error: kayaksError } = await supabase
-      .from('inventory')
-      .select('*')
-      .eq('type', 'kayak')
-      .eq('is_available', true);
+    // Pobierz całkowitą liczbę dostępnych kajaków z inwentarza
+    const { data: equipmentRows, error: equipmentError } = await supabase
+      .from('inventory_equipment')
+      .select('payload');
 
-    if (kayaksError) {
+    const { data: categoryRows, error: categoryError } = await supabase
+      .from('inventory_categories')
+      .select('payload');
+
+    if (equipmentError || categoryError) {
       throw new Error('Błąd podczas pobierania dostępnych kajaków');
     }
 
-    const totalKayaks = kayaks?.length || 0;
+    const equipment = (equipmentRows ?? []).map(
+      (r: { payload: Equipment }) => r.payload
+    );
+    const categories = (categoryRows ?? []).map(
+      (r: { payload: Category }) => r.payload
+    );
+
+    const kayakCategoryIds = categories
+      .filter((c) => c.name.toLowerCase().includes('kajak'))
+      .map((c) => c.id);
+
+    const totalKayaks = equipment
+      .filter((e) => kayakCategoryIds.includes(e.categoryId))
+      .reduce((sum, e) => sum + (e.quantity || 0), 0);
     const totalPeopleInBookings = bookings.reduce((sum, booking) => sum + (booking.numberOfPeople || 0), 0);
     const availableKayaks = Math.max(0, totalKayaks - Math.ceil(totalPeopleInBookings / 2)); // Zakładamy 2 osoby na kajak
 
