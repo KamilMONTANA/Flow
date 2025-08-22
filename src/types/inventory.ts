@@ -6,7 +6,7 @@ export interface Equipment {
   description?: string
   condition: 'new' | 'good' | 'used' | 'damaged'
   lastMaintenance?: Date
-  price?: number
+  price?: number // cena za sztukę
 }
 
 export interface Car {
