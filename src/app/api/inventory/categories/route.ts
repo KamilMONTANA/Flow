@@ -44,11 +44,22 @@ export async function POST(request: NextRequest) {
     // Najpierw usuń kategorie, których nie ma w nowej liście
     const newIds = rows.map(row => row.id)
     if (newIds.length > 0) {
-      const { error: deleteError } = await supabase
+      // pobierz aktualne identyfikatory kategorii z bazy
+      const { data: existingRows, error: selectError } = await supabase
         .from('inventory_categories')
-        .delete()
-        .not('id', 'in', newIds)
-      if (deleteError) throw deleteError
+        .select('id')
+      if (selectError) throw selectError
+
+      const existingIds = (existingRows ?? []).map(r => r.id as string)
+      const idsDoUsuniecia = existingIds.filter(id => !newIds.includes(id))
+
+      if (idsDoUsuniecia.length > 0) {
+        const { error: deleteError } = await supabase
+          .from('inventory_categories')
+          .delete()
+          .in('id', idsDoUsuniecia)
+        if (deleteError) throw deleteError
+      }
     }
 
     // Upsert zamiast kasowania wszystkiego – bezpieczniejsze i atomowe per wiersz
