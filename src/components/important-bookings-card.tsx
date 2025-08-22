@@ -67,6 +67,7 @@ export function ImportantBookingsCard({ bookings }: ImportantBookingsCardProps) 
               { label: "Altana", value: booking.gazebo, type: "boolean" as const },
               { label: "Dostawki", value: booking.deliveries, type: "number" as const },
               { label: "Kapoki dziecięce", value: booking.childKayaks, type: "number" as const },
+              { label: "Cena za kajak", value: booking.kayakPrice, type: "number" as const },
             ].filter((a) => {
               if (a.type === "boolean") return a.value === true;
               if (a.type === "number") return typeof a.value === "number" && a.value > 0;

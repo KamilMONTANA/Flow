@@ -56,6 +56,7 @@ const formSchema = z.object({
   gazebo: z.boolean(),
   driversCount: z.number().min(0),
   childKayaks: z.number().min(0),
+  kayakPrice: z.number().min(0),
     deliveries: z.number().min(0),
     dryBags: z.number().min(0), // liczba worków wodoszczelnych
     // Akceptacje regulaminów
@@ -86,7 +87,8 @@ export function BookingForm({ booking, onSave, onCancel }: BookingFormProps) {
       electricity: booking?.electricity || false,
       gazebo: booking?.gazebo || false,
         driversCount: booking?.driversCount ?? 0,
-        childKayaks: booking?.childKayaks ?? 0,
+      childKayaks: booking?.childKayaks ?? 0,
+      kayakPrice: booking?.kayakPrice ?? 0,
         deliveries: booking?.deliveries ?? 0,
         dryBags: booking?.dryBags ?? 0, // domyślna liczba worków wodoszczelnych
         acceptKayakTerms: false,
@@ -241,6 +243,7 @@ export function BookingForm({ booking, onSave, onCancel }: BookingFormProps) {
         gazebo: values.gazebo,
         driversCount: values.driversCount,
         childKayaks: values.childKayaks,
+        kayakPrice: values.kayakPrice,
         deliveries: values.deliveries,
         dryBags: values.dryBags, // zapis liczby worków wodoszczelnych
         createdAt: booking?.createdAt || now,
@@ -528,6 +531,18 @@ export function BookingForm({ booking, onSave, onCancel }: BookingFormProps) {
               aria-label="Kapoki dziecięce"
             />
             {errors.childKayaks && <p className="text-sm text-red-500">{errors.childKayaks.message}</p>}
+          </div>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="kayakPrice">Cena za kajak</Label>
+            <Input
+              id="kayakPrice"
+              type="number"
+              min="0"
+              step="0.01"
+              {...register("kayakPrice", { valueAsNumber: true })}
+              aria-label="Cena za kajak"
+            />
+            {errors.kayakPrice && <p className="text-sm text-red-500">{errors.kayakPrice.message}</p>}
           </div>
           <div className="flex flex-col gap-2">
             <Label htmlFor="deliveries">Ilość dostawek</Label>

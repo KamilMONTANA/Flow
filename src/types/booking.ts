@@ -25,6 +25,7 @@ export const bookingSchema = z.object({
   childKayaks: z.number().optional(),
   deliveries: z.number().optional(),
   dryBags: z.number().optional(), // ilość worków wodoszczelnych dodanych do rezerwacji
+  kayakPrice: z.number().optional(),
   history: z.array(z.object({
     timestamp: z.string(),
     action: z.string(),

@@ -1,6 +1,6 @@
 export type InventoryPayload = {
     id: string;
-    [key: string]: any;
+    [key: string]: unknown;
 }
 
 export type InventoryCategory = InventoryPayload;
