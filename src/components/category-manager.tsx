@@ -200,7 +200,7 @@ export function CategoryManager({ categories, setCategories }: CategoryManagerPr
           ))}
           
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => openDialog()}>
+          <DropdownMenuItem onSelect={() => openDialog()}>
             <Plus className="w-4 h-4 mr-2" />
             Dodaj nową kategorię
           </DropdownMenuItem>
